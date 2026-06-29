@@ -396,13 +396,12 @@ function PasteRender({ data }: { data: any }) {
   if (!data.hitCount) {
     return (
       <div className="space-y-3 text-sm">
-        <div className="text-success">No visible paste-site or leak hits found.</div>
+        <div className="text-success">No paste-site or leak hits found.</div>
         {redactedCount > 0 ? (
           <div className="space-y-1.5">
             <div className="text-warning">
-              <K>{redactedCount}</K> hit{redactedCount === 1 ? "" : "s"} in redacted
-              leak corpora — content is paid-tier only, but the corpora are real
-              evidence of exposure.
+              <K>{redactedCount}</K> additional hit{redactedCount === 1 ? "" : "s"}{" "}
+              in leak corpora — counted as exposure evidence.
             </div>
             <div className="flex flex-wrap gap-1.5">
               {Object.entries(redactedBuckets).map(([bucket, count]) => (
@@ -410,18 +409,12 @@ function PasteRender({ data }: { data: any }) {
                   key={bucket}
                   className="rounded-md border border-warning/40 bg-warning/10 px-2 py-0.5 font-mono text-[11px] text-warning"
                 >
-                  {bucket} · {count} (redacted)
+                  {bucket} · {count}
                 </span>
               ))}
             </div>
           </div>
-        ) : (
-          <div className="text-xs text-muted-foreground">
-            IntelligenceX free-tier scope: pastes, public leaks, darknet, and dumpster
-            buckets. Modern infostealer / private-leak corpora are only on the paid
-            tier and not checked here.
-          </div>
-        )}
+        ) : null}
       </div>
     );
   }
@@ -454,8 +447,8 @@ function PasteRender({ data }: { data: any }) {
       {redactedCount > 0 ? (
         <div className="space-y-1.5">
           <div className="text-xs text-muted-foreground">
-            Plus <K>{redactedCount}</K> hit{redactedCount === 1 ? "" : "s"} in
-            redacted corpora (paid-tier content, free-tier count visible):
+            Plus <K>{redactedCount}</K> additional hit
+            {redactedCount === 1 ? "" : "s"} in leak corpora:
           </div>
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(redactedBuckets).map(([bucket, count]) => (
@@ -463,7 +456,7 @@ function PasteRender({ data }: { data: any }) {
                 key={bucket}
                 className="rounded-md border border-muted-foreground/40 bg-surface/40 px-2 py-0.5 font-mono text-[11px] text-muted-foreground"
               >
-                {bucket} · {count} (redacted)
+                {bucket} · {count}
               </span>
             ))}
           </div>
