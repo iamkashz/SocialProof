@@ -109,6 +109,8 @@ function adaptOutput(toolName: string, output: unknown): unknown {
         hitCount: o.hit_count,
         buckets: o.buckets,
         hits: o.hits,
+        redactedHitCount: o.redacted_hit_count,
+        redactedBuckets: o.redacted_buckets,
         error: o.error,
       };
     case "user_scanner_lookup":
@@ -405,7 +407,7 @@ function groupHasFindings(toolName: string, runs: AgentRun[]): boolean {
       case "gravatar_agent":
         return Boolean(o.exists);
       case "paste_agent":
-        return Number(o.hitCount ?? 0) > 0;
+        return Number(o.hitCount ?? 0) > 0 || Number(o.redactedHitCount ?? 0) > 0;
       case "account_enum_agent": {
         // user-scanner shape: foundCount; username-enum shape: existsCount.
         const found = Number(o.foundCount ?? o.existsCount ?? 0);
@@ -555,7 +557,7 @@ function phaseFromParts(parts: AgentPart[]): { label: string; detail: string } {
     return {
       label: `Running recon (${reconDone}/${reconTotal})`,
       detail:
-        "Querying breach, GitHub, Gravatar, paste-site, and account-registration sources in parallel.",
+        "Querying breach, GitHub, Gravatar, paste-site, and account-registration sources.",
     };
   }
 

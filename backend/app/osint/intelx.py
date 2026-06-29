@@ -9,11 +9,17 @@ Engineering decisions:
    + its title is enough to score risk; downloading the leak content costs
    one credit per hit and yields nothing the user can act on in this tool.
 
-2. **Bucket scope.** Only the four breach-flavored buckets are queried:
-   `pastes`, `leaks.public`, `darknet`, `dumpster`. The rest of IntelX's
-   index (Whois, DNS, Usenet, government archives) returns false-positive
-   noise for self-scans — domains your email's host appears in are not the
-   user's exposure.
+2. **Bucket scope, two tiers.**
+   - We *list* records from `pastes`, `leaks.public`, `darknet`, `dumpster`.
+     Those are the buckets the free tier returns content/metadata for.
+   - We *also* request `leaks.logs` and `leaks.private` in the same search.
+     Their per-record content is redacted on the free tier, but the
+     `/intelligent/search/statistic` endpoint reports the per-bucket hit
+     count even for redacted buckets. So we can know "this email appears
+     in N redacted leak corpora" without paying — strong corroborating
+     signal even though we can't surface the records themselves.
+   - The rest of IntelX's index (Whois, DNS, Usenet, government archives)
+     returns false-positive noise for self-scans and is excluded.
 
 3. **Conservative timeout + early termination.** Search jobs run async on
    IntelX's side; we poll for up to ~8s and explicitly terminate the job
@@ -35,7 +41,21 @@ from typing import Any
 import httpx
 
 _BASE_URL = os.getenv("INTELX_BASE_URL", "https://free.intelx.io")
-_BUCKETS = ["pastes", "leaks.public", "darknet", "dumpster"]
+
+# Buckets we list records from (content/metadata visible on free tier).
+_VISIBLE_BUCKETS = ["pastes", "leaks.public", "darknet", "dumpster"]
+
+# Buckets that are redacted on the free tier — records exist but the
+# content is hidden. /intelligent/search/statistic still returns
+# per-bucket counts for these, so we can score their presence without
+# paying. Prefix match against returned bucket names (which can be more
+# specific, e.g. `leaks.private.general`).
+_REDACTED_BUCKET_PREFIXES = ("leaks.logs", "leaks.private")
+
+# All buckets we request from the search. The redacted ones drive the
+# statistic-only signal; the visible ones drive the per-record list.
+_BUCKETS = [*_VISIBLE_BUCKETS, "leaks.logs", "leaks.private"]
+
 _MAX_RESULTS = 25
 _POLL_INTERVAL_SECONDS = 1.0
 _POLL_MAX_SECONDS = 8.0
@@ -67,10 +87,19 @@ def _empty_result(email: str, error: str | None = None) -> dict:
         "hit_count": 0,
         "buckets": {},
         "hits": [],
+        # Redacted-bucket counts from /statistic. Free tier hides the
+        # records themselves but exposes the per-bucket totals.
+        "redacted_hit_count": 0,
+        "redacted_buckets": {},
     }
     if error:
         payload["error"] = error
     return payload
+
+
+def _is_redacted_bucket(bucket: str) -> bool:
+    """True if bucket is one we can count but not read on the free tier."""
+    return any(bucket.startswith(p) for p in _REDACTED_BUCKET_PREFIXES)
 
 
 async def paste_search_async(email: str) -> dict:
@@ -138,6 +167,24 @@ async def paste_search_async(email: str) -> dict:
                 if payload.get("status") in (1, 2, 3):
                     status_done = True
 
+            # Statistic endpoint reports per-bucket counts for ALL
+            # buckets we searched, including the redacted ones. Same
+            # `id` as the result poll; no extra credit cost.
+            redacted_counts: dict[str, int] = {}
+            try:
+                stat = await client.get(
+                    f"{_BASE_URL}/intelligent/search/statistic",
+                    params={"id": search_id},
+                )
+                if stat.status_code < 400:
+                    for entry in (stat.json().get("bucket") or []):
+                        name = entry.get("bucket") or ""
+                        count = int(entry.get("count") or 0)
+                        if _is_redacted_bucket(name) and count > 0:
+                            redacted_counts[name] = count
+            except (httpx.HTTPError, ValueError):
+                pass  # best-effort — redacted-count signal is bonus, not required
+
             # Terminate explicitly so we don't keep eating quota
             try:
                 await client.get(
@@ -154,6 +201,12 @@ async def paste_search_async(email: str) -> dict:
     cleaned_hits: list[dict] = []
     for hit in hits:
         bucket = hit.get("bucket") or "unknown"
+        # Redacted buckets may slip through here even though we requested
+        # them as part of the same search — the records exist but their
+        # content is masked. Counted via /statistic above; skip here so
+        # the visible-hits list stays just visible records.
+        if _is_redacted_bucket(bucket):
+            continue
         bucket_counts[bucket] = bucket_counts.get(bucket, 0) + 1
         cleaned_hits.append(
             {
@@ -172,6 +225,8 @@ async def paste_search_async(email: str) -> dict:
         "hit_count": len(cleaned_hits),
         "buckets": bucket_counts,
         "hits": cleaned_hits,
+        "redacted_hit_count": sum(redacted_counts.values()),
+        "redacted_buckets": redacted_counts,
     }
 
 

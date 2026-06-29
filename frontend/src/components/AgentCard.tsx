@@ -390,15 +390,38 @@ function GravatarRender({ data }: { data: any }) {
 }
 
 function PasteRender({ data }: { data: any }) {
+  const redactedCount = Number(data.redactedHitCount ?? 0);
+  const redactedBuckets = (data.redactedBuckets ?? {}) as Record<string, number>;
+
   if (!data.hitCount) {
     return (
-      <div className="space-y-1.5 text-sm">
-        <div className="text-success">No paste-site or leak hits found.</div>
-        <div className="text-xs text-muted-foreground">
-          IntelligenceX free-tier scope: pastes, public leaks, darknet, and dumpster
-          buckets. Modern infostealer / private-leak corpora are only on the paid tier
-          and not checked here.
-        </div>
+      <div className="space-y-3 text-sm">
+        <div className="text-success">No visible paste-site or leak hits found.</div>
+        {redactedCount > 0 ? (
+          <div className="space-y-1.5">
+            <div className="text-warning">
+              <K>{redactedCount}</K> hit{redactedCount === 1 ? "" : "s"} in redacted
+              leak corpora — content is paid-tier only, but the corpora are real
+              evidence of exposure.
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {Object.entries(redactedBuckets).map(([bucket, count]) => (
+                <span
+                  key={bucket}
+                  className="rounded-md border border-warning/40 bg-warning/10 px-2 py-0.5 font-mono text-[11px] text-warning"
+                >
+                  {bucket} · {count} (redacted)
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground">
+            IntelligenceX free-tier scope: pastes, public leaks, darknet, and dumpster
+            buckets. Modern infostealer / private-leak corpora are only on the paid
+            tier and not checked here.
+          </div>
+        )}
       </div>
     );
   }
@@ -426,6 +449,24 @@ function PasteRender({ data }: { data: any }) {
               {bucket} · {count}
             </span>
           ))}
+        </div>
+      ) : null}
+      {redactedCount > 0 ? (
+        <div className="space-y-1.5">
+          <div className="text-xs text-muted-foreground">
+            Plus <K>{redactedCount}</K> hit{redactedCount === 1 ? "" : "s"} in
+            redacted corpora (paid-tier content, free-tier count visible):
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(redactedBuckets).map(([bucket, count]) => (
+              <span
+                key={bucket}
+                className="rounded-md border border-muted-foreground/40 bg-surface/40 px-2 py-0.5 font-mono text-[11px] text-muted-foreground"
+              >
+                {bucket} · {count} (redacted)
+              </span>
+            ))}
+          </div>
         </div>
       ) : null}
       {hits.length ? (
@@ -473,21 +514,29 @@ function PasteRender({ data }: { data: any }) {
  * shows the X-of-Y count so the user knows the breadth of coverage.
  */
 function AccountEnumRender({ data }: { data: any }) {
-  const items: Array<{ label: string; url?: string }> = [];
+  // Each tile knows whether its URL points to a per-user profile page
+  // (worth linking — Twitch, GitHub, Dev.to under a specific handle) or
+  // just the site homepage (not worth linking — Amazon, Office365, etc.
+  // for email-side hits, since user-scanner can't construct a per-user
+  // URL from an email-keyed probe).
+  const items: Array<{ label: string; url?: string; linkable: boolean }> = [];
   let identity: string | undefined;
 
   if (Array.isArray(data?.accounts)) {
-    // user-scanner email-side shape.
+    // user-scanner email-side shape. URLs here are site homepages
+    // ("https://amazon.com", "https://office365.com") because the probe
+    // is email-keyed — there's no public profile URL to deep-link to.
     for (const a of data.accounts) {
       if (!a?.site_name) continue;
-      items.push({ label: a.site_name, url: a.url });
+      items.push({ label: a.site_name, url: a.url, linkable: false });
     }
   } else if (Array.isArray(data?.platforms)) {
-    // Username-keyed shape — filter to accounts that actually exist.
+    // Username-keyed shape. URLs point at the actual public profile
+    // page for the discovered handle — worth linking.
     identity = data.username;
     for (const p of data.platforms) {
       if (!p?.exists || !p?.platform) continue;
-      items.push({ label: p.platform, url: p.url });
+      items.push({ label: p.platform, url: p.url, linkable: true });
     }
   }
 
@@ -496,6 +545,9 @@ function AccountEnumRender({ data }: { data: any }) {
   if (!found) {
     return <div className="text-sm text-muted-foreground">No accounts found.</div>;
   }
+
+  const baseTileClass =
+    "flex items-center justify-between gap-2 rounded-md border border-success/40 bg-success/10 px-2.5 py-1.5 text-xs text-success";
 
   return (
     <div>
@@ -509,22 +561,19 @@ function AccountEnumRender({ data }: { data: any }) {
       </div>
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
         {items.map((it) =>
-          it.url ? (
+          it.linkable && it.url ? (
             <a
-              key={it.label + (it.url ?? "")}
+              key={it.label + it.url}
               href={it.url}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center justify-between gap-2 rounded-md border border-success/40 bg-success/10 px-2.5 py-1.5 text-xs text-success transition hover:bg-success/15"
+              className={`${baseTileClass} transition hover:bg-success/15`}
             >
               <span className="font-medium">{it.label}</span>
               <span className="font-mono">found</span>
             </a>
           ) : (
-            <span
-              key={it.label}
-              className="flex items-center justify-between gap-2 rounded-md border border-success/40 bg-success/10 px-2.5 py-1.5 text-xs text-success"
-            >
+            <span key={it.label + (it.url ?? "")} className={baseTileClass}>
               <span className="font-medium">{it.label}</span>
               <span className="font-mono">found</span>
             </span>
