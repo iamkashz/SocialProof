@@ -5,16 +5,17 @@ import { ListChecks } from "lucide-react";
  * Shared "Recommendations" panel used on /sample and /scan/$id.
  *
  * Treated as the user-actionable conclusion of the report, so it gets
- * heavier visual weight than the surrounding panels:
- *   - Primary-tinted border + soft primary background wash on the outer
- *     panel so the section reads as "action lives here".
- *   - Each row has a numbered priority badge color-graded by P1 (red /
- *     critical) through P5 (success / nice-to-have). The body text stays
- *     neutral so it's still readable.
+ * heavier visual weight than the surrounding panels: primary-tinted
+ * border + soft primary background wash on the outer panel so the
+ * section reads as "action lives here".
  *
- * The recommendation data is produced deterministically by the analyst
- * agent (`backend/app/osint/correlate.py`) — priorities are stable
- * integers, so the color grading is reproducible per recommendation.
+ * Each row shows a sequential rank (1, 2, 3…) for ordering plus a
+ * contextual severity pill (Critical / Important / Recommended /
+ * Hygiene) that carries the urgency. The underlying `priority` field
+ * from the analyst still drives the pill color and label — it just
+ * isn't surfaced as a raw number, which would read as inconsistent
+ * when a low-risk scan only fires the hygiene-tier recommendations
+ * (priorities 4 and 5 with no 1-3 above them).
  */
 
 export type Recommendation = {
@@ -58,13 +59,8 @@ export function RecommendationsPanel({ recommendations }: { recommendations: Rec
             key={i}
             className="flex gap-3 rounded-lg border border-border/60 bg-card/80 p-4 transition hover:border-primary/30"
           >
-            <div
-              className={cn(
-                "grid h-9 w-9 shrink-0 place-items-center rounded-md border font-mono text-sm font-semibold",
-                priorityClasses(r.priority),
-              )}
-            >
-              {r.priority}
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border/60 bg-surface/60 font-mono text-sm font-semibold text-muted-foreground">
+              {i + 1}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
