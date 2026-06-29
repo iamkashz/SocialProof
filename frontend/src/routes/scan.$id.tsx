@@ -6,7 +6,7 @@ import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { SummaryRenderer } from "@/components/SummaryRenderer";
 import { useAdkScan, type AgentPart } from "@/hooks/use-adk-scan";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { AlertTriangle, Download, Loader2, Mail, RotateCw } from "lucide-react";
+import { AlertTriangle, Check, Download, Loader2, Mail, RotateCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
@@ -247,20 +247,28 @@ function ScanPage() {
             ) : null}
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => window.print()}
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Print / PDF
-            </button>
-            <button
-              onClick={downloadJson}
-              className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2"
-            >
-              <Download className="h-3.5 w-3.5" />
-              JSON
-            </button>
+            {/* Print + JSON only make sense once the report is complete —
+                exporting a half-rendered page or a partial findings dump
+                would mislead. New scan stays visible so a stuck scan
+                isn't a trap. */}
+            {correlation && assistantText ? (
+              <>
+                <button
+                  onClick={() => window.print()}
+                  className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Print / PDF
+                </button>
+                <button
+                  onClick={downloadJson}
+                  className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  JSON
+                </button>
+              </>
+            ) : null}
             <Link
               to="/"
               className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2"
@@ -291,8 +299,12 @@ function ScanPage() {
           </div>
         )}
 
-        {isLoading && !errorMessage && (
-          <ScanProgressBanner agentParts={agentParts} cached={Boolean(cachedAt)} />
+        {!errorMessage && !cachedAt && (
+          <ScanProgressBanner
+            agentParts={agentParts}
+            cached={Boolean(cachedAt)}
+            isComplete={!isLoading}
+          />
         )}
 
         {/* Row 1: Risk gauge | Executive summary ────────────────────
@@ -409,20 +421,46 @@ function groupHasFindings(toolName: string, runs: AgentRun[]): boolean {
 }
 
 /**
- * Always-on progress banner shown while the scan is streaming. Solves the
- * "page feels hung" symptom during the long-running user-scanner account
- * enumeration (~30s per identity probed): even when no individual agent
- * card has just changed, the banner keeps moving via an elapsed-time
- * counter and a phase label derived from which tool outputs have arrived.
+ * Always-on progress banner. While streaming it solves the "page feels
+ * hung" symptom during the long-running user-scanner account enumeration
+ * by keeping an elapsed-time counter and phase label moving even when
+ * no individual agent card has just changed. After completion it stays
+ * on-screen as a "Completed in X:YY" footer so the user knows how long
+ * the scan took.
  *
  * Phases are inferred from the agent_parts stream, not the backend —
  * the backend doesn't emit phase events, but the order of tool_call
  * arrivals is deterministic enough to map cleanly.
  */
-function ScanProgressBanner({ agentParts, cached }: { agentParts: AgentPart[]; cached: boolean }) {
-  const elapsed = useElapsedSeconds(cached);
-
+function ScanProgressBanner({
+  agentParts,
+  cached,
+  isComplete,
+}: {
+  agentParts: AgentPart[];
+  cached: boolean;
+  isComplete: boolean;
+}) {
+  const elapsed = useElapsedSeconds(cached, isComplete);
   const phase = useMemo(() => phaseFromParts(agentParts), [agentParts]);
+
+  if (isComplete) {
+    return (
+      <div className="mt-6 rounded-lg border border-success/40 bg-success/10 p-4">
+        <div className="flex items-center gap-3">
+          <Check className="h-4 w-4 shrink-0 text-success" />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-2">
+              <div className="text-sm font-medium text-success">Scan complete</div>
+              <div className="font-mono text-xs text-muted-foreground">
+                in {formatElapsed(elapsed)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 rounded-lg border border-primary/40 bg-primary/10 p-4">
@@ -432,6 +470,9 @@ function ScanProgressBanner({ agentParts, cached }: { agentParts: AgentPart[]; c
           <div className="flex items-baseline gap-2">
             <div className="text-sm font-medium text-primary">{phase.label}</div>
             <div className="font-mono text-xs text-muted-foreground">{formatElapsed(elapsed)}</div>
+            <div className="font-mono text-[11px] text-muted-foreground/70">
+              · est. ~2-3 min
+            </div>
           </div>
           <div className="mt-0.5 text-xs text-muted-foreground">{phase.detail}</div>
         </div>
@@ -441,19 +482,20 @@ function ScanProgressBanner({ agentParts, cached }: { agentParts: AgentPart[]; c
 }
 
 /**
- * Tracks scan elapsed time in whole seconds. Returns 0 when `cached` is true
- * so we don't show a counter for instant cache replays.
+ * Tracks scan elapsed time in whole seconds. Stops at completion so the
+ * displayed value freezes once the scan is done. Returns 0 for cache
+ * replays so we don't show a counter for instant results.
  */
-function useElapsedSeconds(cached: boolean): number {
+function useElapsedSeconds(cached: boolean, isComplete: boolean): number {
   const [seconds, setSeconds] = useState(0);
   useEffect(() => {
-    if (cached) return;
+    if (cached || isComplete) return;
     const t0 = performance.now();
     const id = window.setInterval(() => {
       setSeconds(Math.floor((performance.now() - t0) / 1000));
     }, 250);
     return () => window.clearInterval(id);
-  }, [cached]);
+  }, [cached, isComplete]);
   return seconds;
 }
 

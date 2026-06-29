@@ -157,9 +157,8 @@ async def _live_stream(email: str, session_id: str) -> AsyncIterator[dict]:
             yield {
                 "type": "warning",
                 "message": (
-                    "Could not generate the executive summary "
-                    "(model quota or transient error). All findings "
-                    "and the risk score above are valid."
+                    "Executive summary unavailable for this scan. All "
+                    "findings and the risk score above are valid."
                 ),
             }
         else:

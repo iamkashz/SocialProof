@@ -113,8 +113,9 @@ confirmed and whether a real name or location was found. Do NOT include \
 if everything is empty.
 
 **The attacker's path:** ONLY if "Has anything to narrate" is True. Write \
-2-3 sentences in FIRST PERSON as if you are an attacker walking through \
-what you'd do with this footprint. Reference SPECIFIC FACTS from the data \
+2-3 sentences in THIRD PERSON describing what an attacker could do with \
+this footprint. Use phrases like "An attacker could…" or "An attacker \
+would…" — never "I" or "your". Reference SPECIFIC FACTS from the data \
 above ONLY — actual breach names from "Top breach names", actual handles \
 from "Candidate usernames discovered", actual platforms from "Confirmed \
 platform names", actual real name only if "GitHub profile real name" is \
@@ -122,12 +123,14 @@ non-null.
 
 Tone guidance (DO NOT copy these sentences — they use <PLACEHOLDER> tokens, \
 not real data; reading a placeholder verbatim is a fidelity violation):
-"I already have your password from the <ACTUAL_BREACH_NAME> dump. I'll \
-try it on <ACTUAL_CONFIRMED_PLATFORM> under the handle \
-<ACTUAL_USERNAME_FROM_LIST>. A targeted phishing email writes itself."
-"I have your email in <ACTUAL_PASTE_COUNT> paste-site dumps. Your handle \
-<ACTUAL_USERNAME_FROM_LIST> is active on <ACTUAL_CONFIRMED_PLATFORM> — \
-I'll spear-phish from there."
+"An attacker holding the password from the <ACTUAL_BREACH_NAME> dump \
+could try it against <ACTUAL_CONFIRMED_PLATFORM> under the handle \
+<ACTUAL_USERNAME_FROM_LIST>, and the public profile data would write \
+a targeted phishing email for them."
+"With the email appearing in <ACTUAL_PASTE_COUNT> paste-site dumps and \
+the handle <ACTUAL_USERNAME_FROM_LIST> active on \
+<ACTUAL_CONFIRMED_PLATFORM>, an attacker could pivot from leaked \
+credentials to a credible spear-phishing pretext."
 
 When you write the section, every <PLACEHOLDER> must be substituted with \
 a real value from the data above. Do not include placeholders or any \
