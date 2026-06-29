@@ -315,10 +315,23 @@ function ScanPage() {
           </div>
         )}
 
-        {/* Row 2: Agent timeline ────────────────────────────────────
+        {/* Row 2: Recommendations ──────────────────────────────────
+            Surfaced as soon as the correlation lands so the action
+            list is visible above the (still-relevant) audit trail.
+            During the scan this slot is empty — the agent timeline
+            below is what the user watches; once results arrive the
+            remediation list slides in here ahead of the timeline. */}
+        {correlation?.remediations?.length && assistantText ? (
+          <div className="mt-8">
+            <RecommendationsPanel recommendations={correlation.remediations} />
+          </div>
+        ) : null}
+
+        {/* Row 3: Agent timeline ────────────────────────────────────
             Always visible. While the scan is running this is the
-            user's window into what's happening; once results land it
-            stays as the audit trail. */}
+            user's primary feedback surface; once results land it stays
+            as the audit trail beneath the executive summary and
+            remediations. */}
         <div className="mt-8 rounded-xl border border-border bg-card/60 p-5">
           <div className="mb-3 flex items-center gap-2">
             <span className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -349,16 +362,6 @@ function ScanPage() {
             )}
           </div>
         </div>
-
-        {/* Row 3: Recommendations ──────────────────────────────────
-            Appears only after both the correlation AND the narrator
-            have finished, so the verdict at the top and the action
-            list at the bottom land together. */}
-        {correlation?.remediations?.length && assistantText ? (
-          <div className="mt-8">
-            <RecommendationsPanel recommendations={correlation.remediations} />
-          </div>
-        ) : null}
       </main>
       <SiteFooter />
     </div>

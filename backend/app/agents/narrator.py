@@ -26,6 +26,7 @@ Engineering decisions:
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import AsyncGenerator
 
 from google.adk.agents.base_agent import BaseAgent
@@ -60,8 +61,27 @@ Investigation results (already final — do NOT recompute):
 
 Write the executive summary in markdown using EXACTLY the section headers \
 below, in this order. Each section is one sentence, two at most (except \
-"The attacker's path" which can be 2-3 sentences). Use ONLY the values \
-above — never invent numbers, breach names, usernames, or recommendations.
+"The attacker's path" which can be 2-3 sentences).
+
+CRITICAL DATA-FIDELITY RULES — read carefully, these are not optional:
+  1. Use ONLY the values listed above. Never invent numbers, breach \
+names, usernames, real names, locations, services, or recommendations.
+  2. If a field reads "None", "(none)", "False", or "0": treat that as \
+"the user has no such data" and DO NOT mention it. Do not substitute a \
+placeholder, do not infer one, do not include a hypothetical.
+  3. Usernames you may reference: ONLY those in "Candidate usernames \
+discovered" and "Confirmed platform names". Any other handle is \
+hallucinated — do not include it.
+  4. Real name: reference it ONLY if "GitHub profile real name" is a \
+specific non-null value above. Do not invent a first name to make a \
+sentence sound personal.
+  5. Service / platform names: reference ONLY those in "Top breach \
+names", "Top services where this email is registered", or "Confirmed \
+platform names". Do not name a service that isn't in those lists.
+
+A response that mentions a name, handle, or service NOT present in the \
+fields above will be discarded and the user will see no summary. Stick \
+to the data.
 
 ALWAYS include these two sections:
 
@@ -94,15 +114,25 @@ if everything is empty.
 
 **The attacker's path:** ONLY if "Has anything to narrate" is True. Write \
 2-3 sentences in FIRST PERSON as if you are an attacker walking through \
-what you'd do with this footprint. Reference specific facts from above — \
-breach names, the user's handle, confirmed platforms, real name if known. \
-Be concrete and unsettling but factual. Examples of tone (NOT to copy \
-verbatim, just to calibrate):
-"I already have your password from the LinkedIn dump. I'll try it on \
-Twitch and PyPI under the handle iamkashz. Your real name and location \
-are on your GitHub profile, so a targeted phishing email writes itself."
-"I have your email in 3 paste-site dumps. Your handle wavewright is \
-active on Twitch — I'll spear-phish from there."
+what you'd do with this footprint. Reference SPECIFIC FACTS from the data \
+above ONLY — actual breach names from "Top breach names", actual handles \
+from "Candidate usernames discovered", actual platforms from "Confirmed \
+platform names", actual real name only if "GitHub profile real name" is \
+non-null.
+
+Tone guidance (DO NOT copy these sentences — they use <PLACEHOLDER> tokens, \
+not real data; reading a placeholder verbatim is a fidelity violation):
+"I already have your password from the <ACTUAL_BREACH_NAME> dump. I'll \
+try it on <ACTUAL_CONFIRMED_PLATFORM> under the handle \
+<ACTUAL_USERNAME_FROM_LIST>. A targeted phishing email writes itself."
+"I have your email in <ACTUAL_PASTE_COUNT> paste-site dumps. Your handle \
+<ACTUAL_USERNAME_FROM_LIST> is active on <ACTUAL_CONFIRMED_PLATFORM> — \
+I'll spear-phish from there."
+
+When you write the section, every <PLACEHOLDER> must be substituted with \
+a real value from the data above. Do not include placeholders or any \
+made-up values in your output.
+
 Do NOT include this section if there are zero breaches AND zero paste \
 hits AND zero confirmed accounts.
 
@@ -184,16 +214,173 @@ def _build_prompt(state: dict) -> str:
     )
 
 
+# Tokens we expect to find in legitimate narrator output even when they
+# don't appear in state. These are common English words or domain terms
+# the LLM uses to compose prose — flagging them as hallucinations would
+# fire on every clean response.
+_ALLOWED_PROSE_WORDS = frozenset(
+    {
+        # Section headers + common nouns
+        "Risk", "Breaches", "Paste", "Leak", "Account", "Public", "Identity",
+        "Footprint", "Critical", "High", "Moderate", "Low", "GitHub", "GitLab",
+        "Twitter", "LinkedIn", "Facebook", "Reddit", "Discord", "Instagram",
+        "Email", "Username", "Password", "Phone", "Name", "Address",
+        # Frequently-used prose verbs/adjectives at sentence starts
+        "Your", "Their", "This", "These", "Those", "Since", "Knowing",
+        "Even", "Both", "With", "Without", "Including", "Across",
+        # Common breach-data class names (already capitalized in source)
+        "Passwords", "Names", "Usernames", "Phones", "Geographic", "Locations",
+        "Dates", "IP", "IDs", "Gender", "Genders",
+        # Tooling / phrases mentioned by the prompt itself
+        "IntelligenceX", "Gemini", "SocialProof", "OSINT",
+        # Pronouns / model-of-attacker references
+        "I", "My", "We", "They", "He", "She",
+    }
+)
+
+# Tokens that look like discord-style or generic handle placeholders.
+# An LLM emitting any of these is hallucinating handle-shaped values.
+_HALLUCINATED_HANDLE_PATTERNS = (
+    re.compile(r"\buser[_-]?\d+\b", re.IGNORECASE),
+    re.compile(r"\buser[_-]?(alpha|beta|gamma|x|y|z)\b", re.IGNORECASE),
+    re.compile(r"\b<[A-Z_]+>\b"),  # leaked <PLACEHOLDER> tokens from the prompt
+)
+
+# Common first names the LLM tends to confabulate. Not exhaustive — the
+# real defense is "names not present in state are rejected", but having
+# a denylist catches the most common offenders even when they slip
+# past the state-membership check on prose-like sentences.
+_COMMON_CONFABULATED_NAMES = frozenset(
+    {
+        "jane", "john", "alex", "alice", "bob", "carol", "david", "emily",
+        "sarah", "mike", "michael", "chris", "jennifer", "robert", "linda",
+    }
+)
+
+
+def _build_allowed_token_set(state: dict) -> set[str]:
+    """Collect every concrete identifier the narrator is allowed to use.
+
+    Anything outside this set that's handle-shaped or name-shaped is
+    treated as hallucinated and triggers rejection.
+    """
+    allowed: set[str] = set()
+
+    # Candidate + confirmed usernames.
+    for u in state.get("candidate_usernames") or []:
+        if u:
+            allowed.add(u.lower())
+
+    for r in state.get("enum_results") or []:
+        for plat in r.get("platforms") or []:
+            if plat.get("exists"):
+                if name := plat.get("platform"):
+                    allowed.add(name.lower())
+                if name := plat.get("username"):
+                    allowed.add(name.lower())
+
+    # Account-enum service names.
+    for a in (state.get("account_enum_result") or {}).get("accounts") or []:
+        if name := a.get("site_name"):
+            allowed.add(name.lower())
+
+    # Breach names + exposed data classes.
+    breach = state.get("breach_result") or {}
+    for b in breach.get("breaches") or []:
+        if name := b.get("name"):
+            allowed.add(name.lower())
+    for c in breach.get("exposed_data_classes") or []:
+        allowed.add(c.lower())
+
+    # GitHub profile fields (real name + location).
+    gh_profile = (state.get("github_result") or {}).get("profile") or {}
+    if gh_profile.get("name"):
+        for word in str(gh_profile["name"]).split():
+            allowed.add(word.lower())
+    if gh_profile.get("location"):
+        for word in str(gh_profile["location"]).split():
+            allowed.add(word.lower())
+
+    # Gravatar fields.
+    grav = state.get("gravatar_result") or {}
+    if grav.get("display_name"):
+        for word in str(grav["display_name"]).split():
+            allowed.add(word.lower())
+    if grav.get("location"):
+        for word in str(grav["location"]).split():
+            allowed.add(word.lower())
+
+    # Pivoted GitHub profiles (other identities discovered during pivot).
+    for p in state.get("pivot_profiles") or []:
+        prof = p.get("profile") or {}
+        if name := prof.get("login"):
+            allowed.add(name.lower())
+        if name := prof.get("name"):
+            for word in str(name).split():
+                allowed.add(word.lower())
+
+    return allowed
+
+
+def _validate_narrator_output(text: str, state: dict) -> str | None:
+    """Return rejection reason if `text` contains hallucinated tokens.
+
+    Two-layer check:
+      1. Hard denylist of placeholder patterns and obvious confabulations.
+      2. Inline-code-fenced handles (``...``) and capitalized name-shaped
+         tokens that aren't in the allowed set built from state.
+
+    Returns None if the text is clean.
+    """
+    # 1. Hard denylist — these are unambiguous hallucinations.
+    for pat in _HALLUCINATED_HANDLE_PATTERNS:
+        if m := pat.search(text):
+            return f"hallucinated placeholder token: {m.group(0)!r}"
+
+    allowed = _build_allowed_token_set(state)
+
+    # 2. Backtick-quoted handles. The prompt asks the model to write
+    #    handles unquoted; when it produces backtick-quoted ones they
+    #    are nearly always the model trying to "look concrete" with
+    #    invented data. Any backticked token not in allowed → reject.
+    for m in re.finditer(r"`([a-zA-Z][\w.\-]{2,29})`", text):
+        token = m.group(1).lower()
+        if token not in allowed:
+            return f"hallucinated handle in backticks: {m.group(0)!r}"
+
+    # 3. Capitalized first-name-shaped tokens. We restrict the check to
+    #    a small denylist of common confabulated names so we don't flag
+    #    legitimate proper nouns (city names, service names) that the
+    #    sentence might legitimately contain.
+    for m in re.finditer(r"\b([A-Z][a-z]{2,15})\b", text):
+        word = m.group(1).lower()
+        if word in _COMMON_CONFABULATED_NAMES and word not in allowed:
+            return f"hallucinated proper name: {m.group(1)!r}"
+
+    return None
+
+
 class NarratorAgent(BaseAgent):
     """Generate the executive summary with a model fallback ladder."""
 
     async def _run_async_impl(
         self, ctx: InvocationContext
     ) -> AsyncGenerator[Event, None]:
-        prompt = _build_prompt(dict(ctx.session.state))
+        state = dict(ctx.session.state)
+        prompt = _build_prompt(state)
         # Re-raises if every model fails — server converts that into a
         # `warning` frame so the user still gets the deterministic report.
         text = await generate_with_ladder(prompt, label="narrator")
+
+        # Output guardrail — reject hallucinated handles / names rather
+        # than ship invented PII to the user. Raising sends us through
+        # the server's `warning` frame path; deterministic report still
+        # renders.
+        rejection = _validate_narrator_output(text, state)
+        if rejection is not None:
+            logger.warning("narrator: rejected output (%s)", rejection)
+            raise RuntimeError(f"narrator output failed validation: {rejection}")
+
         yield Event(
             invocation_id=ctx.invocation_id,
             author=self.name,
