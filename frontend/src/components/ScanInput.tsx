@@ -52,9 +52,6 @@ export function ScanInput({ autoFocus = false }: { autoFocus?: boolean }) {
         </button>
       </div>
       {err ? <p className="mt-2 text-sm text-destructive">{err}</p> : null}
-      <p className="mt-2 text-xs text-muted-foreground">
-        Same email is cached for the day to save model quota.
-      </p>
     </form>
   );
 }

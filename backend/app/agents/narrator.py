@@ -325,42 +325,89 @@ def _build_allowed_token_set(state: dict) -> set[str]:
     return allowed
 
 
-def _validate_narrator_output(text: str, state: dict) -> str | None:
+def _validate_section(text: str, allowed: set[str]) -> str | None:
     """Return rejection reason if `text` contains hallucinated tokens.
 
-    Two-layer check:
+    Three-layer check:
       1. Hard denylist of placeholder patterns and obvious confabulations.
-      2. Inline-code-fenced handles (``...``) and capitalized name-shaped
-         tokens that aren't in the allowed set built from state.
+      2. Backtick-quoted handles that aren't in the allowed set.
+      3. Capitalized first-name-shaped tokens from a common-confabulation
+         denylist when they aren't in the allowed set.
 
-    Returns None if the text is clean.
+    Returns None if the section is clean.
     """
-    # 1. Hard denylist — these are unambiguous hallucinations.
     for pat in _HALLUCINATED_HANDLE_PATTERNS:
         if m := pat.search(text):
             return f"hallucinated placeholder token: {m.group(0)!r}"
 
-    allowed = _build_allowed_token_set(state)
-
-    # 2. Backtick-quoted handles. The prompt asks the model to write
-    #    handles unquoted; when it produces backtick-quoted ones they
-    #    are nearly always the model trying to "look concrete" with
-    #    invented data. Any backticked token not in allowed → reject.
     for m in re.finditer(r"`([a-zA-Z][\w.\-]{2,29})`", text):
         token = m.group(1).lower()
         if token not in allowed:
             return f"hallucinated handle in backticks: {m.group(0)!r}"
 
-    # 3. Capitalized first-name-shaped tokens. We restrict the check to
-    #    a small denylist of common confabulated names so we don't flag
-    #    legitimate proper nouns (city names, service names) that the
-    #    sentence might legitimately contain.
     for m in re.finditer(r"\b([A-Z][a-z]{2,15})\b", text):
         word = m.group(1).lower()
         if word in _COMMON_CONFABULATED_NAMES and word not in allowed:
             return f"hallucinated proper name: {m.group(1)!r}"
 
     return None
+
+
+# Section header pattern from the prompt. Each section starts with a
+# bolded label (`**Risk:**`, `**Breaches:**`, etc.) followed by prose.
+# We split on these to validate per-section so one bad section doesn't
+# kill the whole summary.
+_SECTION_SPLIT_RE = re.compile(r"(?=^\*\*[A-Za-z][A-Za-z'\- /]{2,40}:\*\*)", re.MULTILINE)
+
+
+def _filter_narrator_output(text: str, state: dict) -> tuple[str, list[str]]:
+    """Split the narrator's text into sections, validate each, drop the
+    bad ones, return (salvaged_text, [list of rejection reasons]).
+
+    Salvage strategy:
+      - If the whole text has no section headers, treat it as one block
+        and validate the whole thing.
+      - Otherwise validate each section independently. Clean sections
+        survive; sections that trip the validator are dropped silently.
+      - If at least one clean section survives, return the joined text.
+      - If every section is bad, return ("", [reasons]) and the caller
+        will raise so the warning frame fires.
+    """
+    allowed = _build_allowed_token_set(state)
+
+    # Split into chunks. The lookahead-based split keeps the **Header:**
+    # marker attached to the section that owns it. The first chunk is
+    # any preamble (usually empty/whitespace).
+    chunks = _SECTION_SPLIT_RE.split(text.strip())
+    chunks = [c.strip() for c in chunks if c and c.strip()]
+
+    # No section headers found — fall back to whole-text validation.
+    if not chunks or not any(c.startswith("**") for c in chunks):
+        rejection = _validate_section(text, allowed)
+        if rejection is not None:
+            return "", [rejection]
+        return text, []
+
+    kept: list[str] = []
+    rejections: list[str] = []
+    for chunk in chunks:
+        if not chunk.startswith("**"):
+            # Preamble or trailing prose without a header — keep if clean.
+            r = _validate_section(chunk, allowed)
+            if r is None:
+                kept.append(chunk)
+            else:
+                rejections.append(f"(preamble) {r}")
+            continue
+        r = _validate_section(chunk, allowed)
+        if r is None:
+            kept.append(chunk)
+        else:
+            # Identify the offending section by its header for the log.
+            header = chunk.split(":**", 1)[0] + ":**"
+            rejections.append(f"{header} {r}")
+
+    return "\n\n".join(kept), rejections
 
 
 class NarratorAgent(BaseAgent):
@@ -375,19 +422,24 @@ class NarratorAgent(BaseAgent):
         # `warning` frame so the user still gets the deterministic report.
         text = await generate_with_ladder(prompt, label="narrator")
 
-        # Output guardrail — reject hallucinated handles / names rather
-        # than ship invented PII to the user. Raising sends us through
-        # the server's `warning` frame path; deterministic report still
-        # renders.
-        rejection = _validate_narrator_output(text, state)
-        if rejection is not None:
-            logger.warning("narrator: rejected output (%s)", rejection)
-            raise RuntimeError(f"narrator output failed validation: {rejection}")
+        # Output guardrail. Each section validated independently so a
+        # single bad section (most often the attacker's path, which is
+        # the most creative and hallucination-prone) gets dropped
+        # silently rather than tanking the whole summary. If everything
+        # tripped the validator, raise — server emits the warning frame
+        # and the deterministic report still renders.
+        salvaged, rejections = _filter_narrator_output(text, state)
+        for r in rejections:
+            logger.warning("narrator: dropped section (%s)", r)
+        if not salvaged:
+            raise RuntimeError(
+                f"narrator output failed validation: {rejections or 'empty'}"
+            )
 
         yield Event(
             invocation_id=ctx.invocation_id,
             author=self.name,
-            content=types.Content(role="model", parts=[types.Part(text=text)]),
+            content=types.Content(role="model", parts=[types.Part(text=salvaged)]),
         )
 
 
