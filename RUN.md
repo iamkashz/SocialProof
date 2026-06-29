@@ -41,18 +41,16 @@ You need two free API keys:
 
 ### 3. Set the keys in `backend/app/.env`
 
-Create the file if it doesn't exist:
+Copy the template and fill in real values:
 
 ```bash
 cd SocialProof/backend/app
-cat > .env <<'EOF'
-GOOGLE_API_KEY=<paste-your-gemini-key>
-INTELX_API_KEY=<paste-your-intelx-key>
-EOF
+cp .env.example .env
+$EDITOR .env   # paste your GOOGLE_API_KEY and INTELX_API_KEY
 ```
 
-> Optional: add `GITHUB_TOKEN=<your-token>` to raise GitHub commit-search
-> rate limit from 60/hr to 5000/hr.
+> Optional: also uncomment `GITHUB_TOKEN` in `.env` to raise GitHub
+> commit-search rate limit from 60/hr to 5000/hr.
 
 ### 4. Install project dependencies
 

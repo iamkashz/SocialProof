@@ -52,7 +52,7 @@ function Author() {
           <div className="flex flex-col items-center">
             <div className="h-36 w-36 overflow-hidden rounded-2xl border border-border bg-card/60 shadow-sm shadow-primary/10">
               <img
-                src="/img/kashif.jpg"
+                src="/img/author.jpg"
                 alt="Kashz"
                 className="h-full w-full object-cover"
               />
