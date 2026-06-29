@@ -391,7 +391,16 @@ function GravatarRender({ data }: { data: any }) {
 
 function PasteRender({ data }: { data: any }) {
   if (!data.hitCount) {
-    return <div className="text-sm text-success">No paste-site or leak hits found.</div>;
+    return (
+      <div className="space-y-1.5 text-sm">
+        <div className="text-success">No paste-site or leak hits found.</div>
+        <div className="text-xs text-muted-foreground">
+          IntelligenceX free-tier scope: pastes, public leaks, darknet, and dumpster
+          buckets. Modern infostealer / private-leak corpora are only on the paid tier
+          and not checked here.
+        </div>
+      </div>
+    );
   }
   const buckets = (data.buckets ?? {}) as Record<string, number>;
   const hits = (data.hits ?? []) as Array<{

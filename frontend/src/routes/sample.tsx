@@ -718,7 +718,14 @@ function SampleReport() {
           </div>
         </div>
 
-        {/* Row 2: Agent timeline */}
+        {/* Row 2: Recommendations — surfaced above the audit trail so
+            the action list lands immediately after the verdict. */}
+        <div className="mt-8">
+          <RecommendationsPanel recommendations={preset.correlation.remediations} />
+        </div>
+
+        {/* Row 3: Agent timeline — kept beneath the executive summary
+            and remediations as the auditable record of what was probed. */}
         <div className="mt-8 rounded-xl border border-border bg-card/60 p-5">
           <div className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">
             Agent timeline
@@ -733,11 +740,6 @@ function SampleReport() {
               />
             ))}
           </div>
-        </div>
-
-        {/* Row 3: Recommendations */}
-        <div className="mt-8">
-          <RecommendationsPanel recommendations={preset.correlation.remediations} />
         </div>
       </main>
       <SiteFooter />
