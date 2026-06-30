@@ -52,7 +52,7 @@ function Methodology() {
           <StageCard
             label="Recon (5 agents, parallel)"
             sub="Deterministic"
-            body="Breach Lookup (XposedOrNot), GitHub Mining (commit-author search + profile), Gravatar Profile, Paste & Leak Search (IntelligenceX metadata), and Account Enum (user-scanner email-side, ~95 services). Five HTTP fan-outs running concurrently."
+            body="Breach Lookup (XposedOrNot), GitHub Mining (commit-author search + profile), Account Enum (user-scanner email-side, ~95 services), Gravatar Profile, and Paste & Leak Search (IntelligenceX metadata). Five HTTP fan-outs running concurrently."
           />
           <StageCard
             label="Identity Resolver"

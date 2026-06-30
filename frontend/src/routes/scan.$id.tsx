@@ -50,6 +50,21 @@ const TOOL_NAME_ALIAS: Record<string, string> = {
 // in the account_enum panel after the next pivot iteration probes them).
 const HIDDEN_TOOLS = new Set<string>(["handle_discovery"]);
 
+// Stable display order for the agent timeline. ParallelAgent races mean
+// SSE arrival order isn't deterministic; the layout shouldn't shuffle
+// across scans. Order chosen so the most actionable signals (breaches,
+// identity, account presence) land first and the slower / less-direct
+// sources (Gravatar's optional profile data, IntelX leak corpora) trail.
+// Correlation always tail-ends because it's the verdict.
+const PREFERRED_AGENT_ORDER = [
+  "breach_agent",
+  "github_agent",
+  "account_enum_agent",
+  "gravatar_agent",
+  "paste_agent",
+  "correlation_agent",
+];
+
 // Map Python snake_case tool outputs into the camelCase keys AgentCard expects.
 function adaptOutput(toolName: string, output: unknown): unknown {
   if (!output || typeof output !== "object") return output;
@@ -164,17 +179,21 @@ function ScanPage() {
     [agentParts],
   );
 
-  // Group consecutive cards by logical agent label so the timeline shows one
-  // "Username Enum Agent" card with N runs inside rather than N separate
-  // cards. Order is preserved by the first-seen index of each group.
+  // Group cards by logical agent label so the timeline shows one
+  // "Account Enum Agent" card with N runs inside rather than N separate
+  // cards. Display order is fixed (see PREFERRED_AGENT_ORDER) rather
+  // than first-seen — ParallelAgent races mean SSE arrival order isn't
+  // deterministic, and the user-facing layout shouldn't flicker between
+  // scans. Anything not in the preferred list falls back to first-seen
+  // at the tail.
   const groupedParts = useMemo(() => {
-    const order: string[] = [];
+    const seen: string[] = [];
     const groups: Record<string, AgentRun[]> = {};
     for (const p of renderedParts) {
       const key = p.renderedToolName;
       if (!groups[key]) {
         groups[key] = [];
-        order.push(key);
+        seen.push(key);
       }
       groups[key].push({
         id: p.id,
@@ -184,7 +203,9 @@ function ScanPage() {
         rawToolName: p.toolName,
       });
     }
-    return order.map((key) => ({ toolName: key, runs: groups[key] }));
+    const known = PREFERRED_AGENT_ORDER.filter((k) => k in groups);
+    const unknown = seen.filter((k) => !PREFERRED_AGENT_ORDER.includes(k));
+    return [...known, ...unknown].map((key) => ({ toolName: key, runs: groups[key] }));
   }, [renderedParts]);
 
   const correlation = renderedParts.find(

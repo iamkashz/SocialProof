@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
  *          [Input Validator]
  *                │
  *   ┌────┬────┬──┼──┬────┬────┐
- *  Breach GitHub Gravatar Paste Account-Enum   ← recon · parallel
+ *  Breach GitHub Account-Enum Gravatar Paste   ← recon · parallel
  *   └────┴────┴──┼──┴────┴────┘
  *          [Identity Resolver]
  *                │
@@ -142,8 +142,18 @@ const NODES: NodeDef[] = [
     sub: "api.github.com",
   },
   {
-    id: "gravatar",
+    id: "account_enum",
     x: cx.recon2,
+    y: cy.recon,
+    w: SMALL.w,
+    h: SMALL.h,
+    kind: "deterministic",
+    label: "Account Enum",
+    sub: "user-scanner · 100+",
+  },
+  {
+    id: "gravatar",
+    x: cx.recon3,
     y: cy.recon,
     w: SMALL.w,
     h: SMALL.h,
@@ -153,23 +163,13 @@ const NODES: NodeDef[] = [
   },
   {
     id: "paste",
-    x: cx.recon3,
+    x: cx.recon4,
     y: cy.recon,
     w: SMALL.w,
     h: SMALL.h,
     kind: "deterministic",
     label: "Paste & Leak Search",
     sub: "IntelligenceX",
-  },
-  {
-    id: "account_enum",
-    x: cx.recon4,
-    y: cy.recon,
-    w: SMALL.w,
-    h: SMALL.h,
-    kind: "deterministic",
-    label: "Account Enum",
-    sub: "user-scanner · 100+",
   },
   {
     id: "identity",

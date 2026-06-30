@@ -593,6 +593,22 @@ function buildTimeline(preset: SamplePreset): { toolName: string; runs: AgentRun
       ],
     },
     {
+      // Single panel for account-existence signals — user-scanner's
+      // email-keyed scan and the pivot loop's username-keyed enumeration
+      // both surface here so the user sees one unified view.
+      toolName: "account_enum_agent",
+      runs: [
+        {
+          id: `sample-${preset.id}-account-enum`,
+          rawToolName: "user_scanner_lookup",
+          state: "output-available",
+          input: { email: preset.email },
+          output: preset.accountEnum,
+        },
+        ...enumRuns,
+      ],
+    },
+    {
       toolName: "gravatar_agent",
       runs: [
         {
@@ -614,22 +630,6 @@ function buildTimeline(preset: SamplePreset): { toolName: string; runs: AgentRun
           input: { email: preset.email },
           output: preset.paste,
         },
-      ],
-    },
-    {
-      // Single panel for account-existence signals — user-scanner's
-      // email-keyed scan and the pivot loop's username-keyed enumeration
-      // both surface here so the user sees one unified view.
-      toolName: "account_enum_agent",
-      runs: [
-        {
-          id: `sample-${preset.id}-account-enum`,
-          rawToolName: "user_scanner_lookup",
-          state: "output-available",
-          input: { email: preset.email },
-          output: preset.accountEnum,
-        },
-        ...enumRuns,
       ],
     },
     {

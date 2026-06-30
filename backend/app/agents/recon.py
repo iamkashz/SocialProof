@@ -111,11 +111,15 @@ recon_phase = ParallelAgent(
         "Runs breach, GitHub commit-search, Gravatar, IntelX paste/leak, "
         "and user-scanner account-enumeration lookups in parallel."
     ),
+    # Order shown to ParallelAgent for the kick-off sequence. The
+    # frontend further enforces a stable display order independently
+    # (see PREFERRED_AGENT_ORDER in scan.$id.tsx) since concurrent
+    # tasks race and SSE arrival order isn't deterministic.
     sub_agents=[
         breach_agent,
         github_email_agent,
+        account_enum_agent,
         gravatar_agent,
         paste_agent,
-        account_enum_agent,
     ],
 )
