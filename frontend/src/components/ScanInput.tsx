@@ -2,6 +2,17 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
 
+/** sessionStorage key for the email tied to a given scan session id.
+ *
+ * Email is intentionally NOT in the URL. Search params leak via browser
+ * history, the Referer header on outbound clicks, server access logs,
+ * and shared screenshots. sessionStorage scopes it to the tab, dies on
+ * close, and never crosses the wire as a query string.
+ */
+export function scanStorageKey(sessionId: string): string {
+  return `socialproof:scan-email:${sessionId}`;
+}
+
 export function ScanInput({ autoFocus = false }: { autoFocus?: boolean }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -18,14 +29,10 @@ export function ScanInput({ autoFocus = false }: { autoFocus?: boolean }) {
     }
     setBusy(true);
     const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
-    // Cache-bypass is available via `?fresh=1` on the scan URL directly —
-    // intentionally not a UI affordance, since most visitors should get
-    // the cached replay to keep latency low and API quota intact.
-    navigate({
-      to: "/scan/$id",
-      params: { id },
-      search: { email: trimmed },
-    });
+    sessionStorage.setItem(scanStorageKey(id), trimmed);
+    // Cache-bypass via `?fresh=1` is intentionally not a UI affordance —
+    // most visitors should get the cached replay to keep latency low.
+    navigate({ to: "/scan/$id", params: { id }, search: {} });
   }
 
   return (

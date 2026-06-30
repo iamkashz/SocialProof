@@ -47,9 +47,9 @@ type AdkEvent =
 export function useAdkScan(
   email: string,
   sessionId: string,
-  opts: { forceFresh?: boolean; apiUrl?: string } = {},
+  opts: { forceFresh?: boolean; apiUrl?: string; enabled?: boolean } = {},
 ) {
-  const { forceFresh = false, apiUrl = "/api/scan" } = opts;
+  const { forceFresh = false, apiUrl = "/api/scan", enabled = true } = opts;
   const [agentParts, setAgentParts] = useState<AgentPart[]>([]);
   const [assistantText, setAssistantText] = useState("");
   const [status, setStatus] = useState<ScanStatus>("idle");
@@ -100,6 +100,7 @@ export function useAdkScan(
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     // StrictMode-safe: if a fetch is already in flight for this sessionId,
     // skip. The original abort-on-unmount pattern collided with StrictMode's
     // mount → unmount → remount cycle, killing the only fetch we'd ever make.
@@ -156,7 +157,7 @@ export function useAdkScan(
     // No abort cleanup: the dev-mode StrictMode double-mount would otherwise
     // kill the only fetch. The scan runs to completion in the background; a
     // user navigating away just drops the response.
-  }, [apiUrl, email, sessionId, forceFresh, handleEvent]);
+  }, [apiUrl, email, sessionId, forceFresh, enabled, handleEvent]);
 
   return { agentParts, assistantText, status, errorMessage, warningMessage, cachedAt };
 }

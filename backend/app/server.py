@@ -18,12 +18,16 @@ from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from google.adk.runners import InMemoryRunner
 from google.genai import types
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
 from app import cache
 from app.agent import root_agent
@@ -42,6 +46,18 @@ _NARRATOR_AGENT_NAME = "narrator_agent"
 
 app = FastAPI(title="SocialProof ADK", description="OSINT scanner backed by Google ADK")
 
+# Per-IP rate limiter. /api/scan triggers IntelX (50 searches/day free
+# tier), Gemini (per-model daily caps), and unauthenticated GitHub
+# (30/hr). One misbehaving client can quietly exhaust those quotas for
+# everyone. Limits picked for "demo / single-user" not "production":
+#  - 5/min: handles one real user clicking around, kills abuse loops
+#  - 30/hr: matches GitHub's unauthenticated ceiling — once we're capped
+#    there, more requests aren't producing useful scans anyway
+_limiter = Limiter(key_func=get_remote_address, default_limits=["30/hour", "5/minute"])
+app.state.limiter = _limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
 # Allow Vite dev server (default 5173 + 8080) to hit the API.
 _default_origins = "http://localhost:5173,http://localhost:8080,http://127.0.0.1:5173"
 _origins = [o.strip() for o in os.getenv("ALLOW_ORIGINS", _default_origins).split(",") if o.strip()]
@@ -51,6 +67,35 @@ app.add_middleware(
     allow_methods=["POST", "GET", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+# Defense-in-depth response headers. Today the API only emits JSON +
+# SSE — no untrusted HTML — so XSS/clickjacking aren't currently
+# exploitable. Adding the headers blocks whole classes of future
+# regressions and answers the standard security-review checklist.
+@app.middleware("http")
+async def _security_headers(request, call_next):
+    response = await call_next(request)
+    # Block MIME-sniffing; force declared content-type.
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    # Disallow iframe embedding (clickjacking).
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    # Don't leak full URL via Referer to cross-origin destinations.
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    # Powerful APIs we never use — explicitly off so an injected script
+    # couldn't ask for camera/mic/geolocation.
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "geolocation=(), microphone=(), camera=(), payment=()",
+    )
+    # Locked-down CSP for the JSON / SSE responses this API serves. The
+    # React UI is hosted from Vite/TanStack on a different origin and
+    # ships its own CSP if needed; this one defends the API surface.
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+    )
+    return response
 
 _runner = InMemoryRunner(agent=root_agent, app_name="socialproof")
 
@@ -219,7 +264,8 @@ async def _reject_stream(message: str, session_id: str) -> AsyncIterator[str]:
 
 
 @app.post("/api/scan")
-async def scan(req: ScanRequest) -> StreamingResponse:
+@_limiter.limit("5/minute;30/hour")
+async def scan(request: Request, req: ScanRequest) -> StreamingResponse:
     session_id = req.session_id or f"scan-{uuid.uuid4()}"
     headers = {
         "Cache-Control": "no-cache",

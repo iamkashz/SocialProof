@@ -2,6 +2,7 @@ import { renderToolOutput } from "@/components/AgentCard";
 import { GroupedAgentCard, type AgentRun } from "@/components/GroupedAgentCard";
 import { RecommendationsPanel } from "@/components/RecommendationsPanel";
 import { RiskGauge } from "@/components/RiskGauge";
+import { ScanInput, scanStorageKey } from "@/components/ScanInput";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { SummaryRenderer } from "@/components/SummaryRenderer";
 import { useAdkScan, type AgentPart } from "@/hooks/use-adk-scan";
@@ -10,10 +11,9 @@ import { AlertTriangle, Check, Download, Loader2, Mail, RotateCw } from "lucide-
 import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
 
+// Only the `fresh` cache-bypass flag rides in the URL. Email is stashed
+// in sessionStorage by ScanInput so it doesn't leak via Referer / history.
 const search = z.object({
-  email: z.string().email(),
-  // Optional dev flag set by the landing-page "Force new scan" checkbox.
-  // Bypasses the daily cache. Remove before shipping.
   fresh: z.union([z.literal(1), z.literal("1")]).optional(),
 });
 
@@ -158,11 +158,22 @@ function adaptOutput(toolName: string, output: unknown): unknown {
 
 function ScanPage() {
   const { id } = Route.useParams();
-  const { email, fresh } = Route.useSearch();
+  const { fresh } = Route.useSearch();
+
+  // Email lives in sessionStorage, not the URL. Read it once on mount;
+  // if missing (someone deep-linked /scan/<id> directly without going
+  // through the landing-page form), the scan hook gets an empty string
+  // and we render the recovery view at the bottom — but we still need
+  // to call every hook unconditionally to satisfy the Rules of Hooks.
+  const [email] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    return window.sessionStorage.getItem(scanStorageKey(id)) ?? "";
+  });
+
   const { agentParts, assistantText, status, errorMessage, warningMessage, cachedAt } = useAdkScan(
     email,
     id,
-    { forceFresh: Boolean(fresh) },
+    { forceFresh: Boolean(fresh), enabled: Boolean(email) },
   );
 
   const isLoading = status === "streaming";
@@ -249,6 +260,35 @@ function ScanPage() {
     URL.revokeObjectURL(url);
   }
 
+  // Deep-link recovery: someone navigated to /scan/<id> directly without
+  // running a scan through the landing page, so sessionStorage doesn't
+  // have the email. Show the scan input prompting them to start fresh.
+  if (!email) {
+    return (
+      <div className="min-h-screen">
+        <SiteHeader />
+        <main className="mx-auto w-full max-w-3xl px-4 pb-16 pt-8">
+          <div className="rounded-xl border border-warning/40 bg-warning/5 p-6">
+            <div className="flex items-start gap-2 text-warning">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <div className="text-sm font-medium">Scan session expired</div>
+                <p className="mt-1 text-sm text-foreground/90">
+                  This scan's context is gone (closed tab, new browser, or direct link).
+                  Run a new scan to continue.
+                </p>
+              </div>
+            </div>
+            <div className="mt-5">
+              <ScanInput autoFocus />
+            </div>
+          </div>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <SiteHeader />
@@ -256,7 +296,7 @@ function ScanPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-xs uppercase tracking-widest text-muted-foreground">
-              Investigation target
+              Public footprint for
             </div>
             <div className="mt-1 flex items-center gap-2 text-xl font-medium">
               <Mail className="h-4 w-4 text-primary" />

@@ -659,7 +659,7 @@ function SampleReport() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-xs uppercase tracking-widest text-muted-foreground">
-              Sample investigation
+              Sample public footprint
             </div>
             <div className="mt-1 flex items-center gap-2 text-xl font-medium">
               <Mail className="h-4 w-4 text-primary" />

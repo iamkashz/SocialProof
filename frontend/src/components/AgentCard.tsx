@@ -394,27 +394,29 @@ function PasteRender({ data }: { data: any }) {
   const redactedBuckets = (data.redactedBuckets ?? {}) as Record<string, number>;
 
   if (!data.hitCount) {
+    // No visible paste hits. Two sub-cases: clean (also zero redacted)
+    // shows the green "no hits" message; otherwise we show the leak-
+    // database hits alone — never both, since "no hits found" + "N hits
+    // found" reads as a contradiction to anyone who doesn't know the
+    // internal bucket distinction.
+    if (redactedCount === 0) {
+      return <div className="text-sm text-success">No paste-site or leak hits found.</div>;
+    }
     return (
-      <div className="space-y-3 text-sm">
-        <div className="text-success">No paste-site or leak hits found.</div>
-        {redactedCount > 0 ? (
-          <div className="space-y-1.5">
-            <div className="text-warning">
-              <K>{redactedCount}</K> hit{redactedCount === 1 ? "" : "s"} found in leak
-              databases.
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {Object.entries(redactedBuckets).map(([bucket, count]) => (
-                <span
-                  key={bucket}
-                  className="rounded-md border border-warning/40 bg-warning/10 px-2 py-0.5 font-mono text-[11px] text-warning"
-                >
-                  {bucket} · {count}
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : null}
+      <div className="space-y-1.5 text-sm">
+        <div className="text-warning">
+          <K>{redactedCount}</K> hit{redactedCount === 1 ? "" : "s"} found in leak databases.
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {Object.entries(redactedBuckets).map(([bucket, count]) => (
+            <span
+              key={bucket}
+              className="rounded-md border border-warning/40 bg-warning/10 px-2 py-0.5 font-mono text-[11px] text-warning"
+            >
+              {bucket} · {count}
+            </span>
+          ))}
+        </div>
       </div>
     );
   }
