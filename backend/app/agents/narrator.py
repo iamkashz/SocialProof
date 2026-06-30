@@ -180,6 +180,11 @@ def _build_prompt(state: dict) -> str:
     data_classes = (breach.get("exposed_data_classes") or [])[:5]
     # Use risk_assessment's deduped paste count — that's what drove the score.
     deduped_paste_hits = risk.get("paste_hit_count") or paste.get("hit_count", 0)
+    # Redacted hits (counts-only corpus presence) are weaker signal but
+    # still attack material to mention in the walkthrough.
+    redacted_paste_hits = risk.get("paste_hit_count_redacted") or paste.get(
+        "redacted_hit_count", 0
+    )
 
     # user-scanner account registrations — surface count plus top few
     # service names so the narrator has concrete pretext material for
@@ -194,6 +199,7 @@ def _build_prompt(state: dict) -> str:
     has_attack_material = (
         breach.get("breach_count", 0) > 0
         or deduped_paste_hits > 0
+        or redacted_paste_hits > 0
         or confirmed > 0
         or account_count >= 5
     )

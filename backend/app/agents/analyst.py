@@ -92,6 +92,7 @@ def _build_inputs(state: dict) -> dict:
         breach.get("breaches") or [], paste.get("hits") or []
     )
     overlapping_paste_hits = raw_paste_hits - unique_paste_hits
+    redacted_paste_hits = paste.get("redacted_hit_count") or 0
 
     account_registration_count = account_enum.get("found_count") or 0
 
@@ -100,6 +101,7 @@ def _build_inputs(state: dict) -> dict:
             f"{breach.get('breach_count', 0)} breaches; "
             f"{raw_paste_hits} paste/leak hit(s) ({unique_paste_hits} unique, "
             f"{overlapping_paste_hits} overlap with breach data); "
+            f"{redacted_paste_hits} additional leak corpus hit(s); "
             f"{len(candidates)} candidate username(s); "
             f"{public_accounts_found} confirmed public account(s); "
             f"{account_registration_count} account registration(s) via "
@@ -115,6 +117,9 @@ def _build_inputs(state: dict) -> dict:
         # Score only the unique paste hits — overlap with breach data was
         # already counted in `breach_count`.
         "paste_hit_count": unique_paste_hits,
+        # Redacted hits flow through as a separate signal (counts only,
+        # content not visible — see correlate.py Category 2).
+        "paste_hit_count_redacted": redacted_paste_hits,
         "account_registration_count": account_registration_count,
     }
 

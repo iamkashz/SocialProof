@@ -303,8 +303,8 @@ const SAMPLES: SamplePreset[] = [
       { output: { newHandles: [], knownHandles: 3, error: null, reason: null } },
     ],
     correlation: {
-      riskScore: 87,
-      severity: "Critical",
+      riskScore: 63,
+      severity: "High",
       attackChain:
         "4 breaches; 0 paste/leak hit(s); 3 candidate username(s); 2 confirmed public account(s); 14 account registration(s) via user-scanner; 2 GitHub profile(s) resolved.",
       remediations: [
@@ -530,7 +530,7 @@ const SAMPLES: SamplePreset[] = [
     // message or profile fields names another person.
     discoveryRuns: [{ output: { newHandles: [], knownHandles: 2, error: null, reason: null } }],
     correlation: {
-      riskScore: 9,
+      riskScore: 19,
       severity: "Low",
       attackChain:
         "0 breaches; 0 paste/leak hit(s); 2 candidate username(s); 1 confirmed public account(s); 7 account registration(s) via user-scanner; 2 GitHub profile(s) resolved.",
