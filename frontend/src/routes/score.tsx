@@ -159,18 +159,56 @@ function Score() {
       <main className="mx-auto w-full max-w-6xl px-4 py-16">
         <h1 className="text-3xl font-semibold tracking-tight">How scoring works</h1>
         <p className="mt-3 text-muted-foreground">
-          Your risk score is computed deterministically from the agents' raw findings. No language
-          model is involved in scoring — the LLM only writes the executive summary at the end. The
-          same email produces the same score on every run.
+          Every scan produces one number between 0 and 100 plus a severity label. This page
+          explains how that number is built — what each tier means, why the math is reproducible,
+          and exactly which signals push the score up.
         </p>
 
-        <h2 className="mt-10 text-xl font-semibold text-primary">The category structure</h2>
+        {/* 1. Severity bands first — most readers want to know what their
+            label means before they care about the formula. */}
+        <h2 className="mt-10 text-xl font-semibold text-primary">Severity bands</h2>
+        <p className="mt-3 text-sm text-muted-foreground">
+          The final score (0-100) maps to one of four severity labels:
+        </p>
+        <div className="mt-4 space-y-2">
+          {SEVERITY_BANDS.map((band) => (
+            <div
+              key={band.label}
+              className={`flex flex-col gap-1 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${band.className}`}
+            >
+              <div className="flex items-baseline gap-3">
+                <span className="font-semibold">{band.label}</span>
+                <span className="font-mono text-xs opacity-80">{band.range}</span>
+              </div>
+              <span className="text-xs opacity-90">{band.meaning}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* 2. Trust framing — why the number is stable before we show the
+            math. Reassurance comes before complexity. */}
+        <h2 className="mt-10 text-xl font-semibold text-primary">
+          The SocialProof score is deterministic
+        </h2>
+        <p className="mt-3 text-sm text-foreground/90">
+          The same email always produces the same score. The number is a pure Python function over
+          the raw findings the agents collected — no language model is involved in scoring. We
+          treat LLMs as good at writing prose and untrustworthy at calibrated math: they drift
+          between runs, anchor on irrelevant context, and can be coaxed into different answers by
+          rewording. Pinning the math to code gives us three properties an LLM can't: every run is
+          reproducible, the rules are auditable (you can read every weight below), and we can write
+          tests that catch regressions when we tune anything.
+        </p>
+
+        {/* 3. The actual methodology — the bulk of the page. Readers who
+            want to know "why am I a 63" land here. */}
+        <h2 className="mt-10 text-xl font-semibold text-primary">Methodology</h2>
         <p className="mt-3 text-sm text-foreground/90">
           The score is the sum of four sub-scores, each independently capped at 25 points. Reaching
-          Critical (70+) therefore requires real exposure across more than one dimension —
-          maxing a single category alone can only earn 25 points. Each category uses logarithmic
-          diminishing returns on count-based signals: the first few instances of any signal weigh
-          heavily, additional counts yield diminishing marginal points.
+          Critical (70+) therefore requires real exposure across more than one dimension — maxing a
+          single category alone can only earn 25 points. Each category uses logarithmic diminishing
+          returns on count-based signals: the first few instances of any signal weigh heavily;
+          additional counts yield diminishing marginal points.
         </p>
 
         <div className="mt-6 space-y-6">
@@ -204,34 +242,16 @@ function Score() {
           ))}
         </div>
 
-        <h2 className="mt-10 text-xl font-semibold text-primary">Floor rule</h2>
-        <p className="mt-3 text-sm text-foreground/90">
-          If any breach exposed a password, the final score is forced to a minimum of 25 (Moderate).
-          A leaked password is immediately actionable for credential stuffing regardless of how
-          private the rest of your public footprint is — under-scoring that would be wrong.
+        <h3 className="mt-8 text-lg font-semibold text-primary">Floor rule</h3>
+        <p className="mt-2 text-sm text-foreground/90">
+          If any breach exposed a password, the final score is forced to a minimum of 25
+          (Moderate). A leaked password is immediately actionable for credential stuffing
+          regardless of how private the rest of your public footprint is — under-scoring that
+          would be wrong.
         </p>
 
-        <h2 className="mt-10 text-xl font-semibold text-primary">Severity bands</h2>
-        <p className="mt-3 text-sm text-muted-foreground">
-          The final score (0-100) maps to one of four severity labels:
-        </p>
-        <div className="mt-4 space-y-2">
-          {SEVERITY_BANDS.map((band) => (
-            <div
-              key={band.label}
-              className={`flex flex-col gap-1 rounded-lg border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4 ${band.className}`}
-            >
-              <div className="flex items-baseline gap-3">
-                <span className="font-semibold">{band.label}</span>
-                <span className="font-mono text-xs opacity-80">{band.range}</span>
-              </div>
-              <span className="text-xs opacity-90">{band.meaning}</span>
-            </div>
-          ))}
-        </div>
-
-        <h2 className="mt-10 text-xl font-semibold text-primary">Worked example</h2>
-        <p className="mt-3 text-sm text-foreground/90">
+        <h3 className="mt-8 text-lg font-semibold text-primary">Worked example</h3>
+        <p className="mt-2 text-sm text-foreground/90">
           An email in 6 breaches with passwords exposed and 7 distinct data classes, found in 5
           visible paste-site hits and 26 additional leak corpus records, with a real name and
           location visible on a public GitHub profile, 3 linked usernames, 24 confirmed public
@@ -239,45 +259,40 @@ function Score() {
         </p>
         <ul className="mt-3 space-y-1 rounded-lg border border-border bg-card/60 p-4 font-mono text-xs">
           <li>
-            Credential Exposure: 6·log₂(7) + 7 + 2.5·log₂(8) = 16.8 + 7 + 7.5 = 31.3 → capped at <b>25</b>
+            Credential Exposure: 6·log₂(7) + 7 + 2.5·log₂(8) = 16.8 + 7 + 7.5 = 31.3 → capped at{" "}
+            <b>25</b>
           </li>
-          <li>
-            Leak Presence: 5·log₂(6) + 2·log₂(27) = 12.9 + 9.5 = <b>22.4</b>
-          </li>
+          <li>Leak Presence: 5·log₂(6) + 2·log₂(27) = 12.9 + 9.5 = <b>22.4</b></li>
           <li>
             Identity Correlation: 5 + 4 + 4 (name+location bonus) + 4·log₂(4) = <b>21.0</b>
           </li>
           <li>
-            Attack Surface: 4·log₂(31) + 1·log₂(25) = min(18, 19.8) + min(7, 4.6) = 18 + 4.6 = <b>22.6</b>
+            Attack Surface: 4·log₂(31) + 1·log₂(25) = min(18, 19.8) + min(7, 4.6) = 18 + 4.6 ={" "}
+            <b>22.6</b>
           </li>
           <li className="border-t border-border/60 pt-1 text-foreground">
             Total: 25 + 22.4 + 21.0 + 22.6 = <b>91 / 100 → Critical</b>
           </li>
         </ul>
 
-        <h2 className="mt-10 text-xl font-semibold text-primary">Why it's deterministic</h2>
-        <p className="mt-3 text-sm text-foreground/90">
-          Language models are good at writing prose, not at calibrated scoring. They drift between
-          runs, anchor on irrelevant context, and can be coaxed into wildly different answers by
-          rewording the prompt. By making the score a pure Python function over structured findings,
-          we get three properties an LLM can't give us: every run is reproducible, the rules are
-          auditable (you can read them above), and we can write evaluation tests that catch
-          regressions when we tune the weights.
-        </p>
-
-        <h2 className="mt-10 text-xl font-semibold text-primary">What this score is not</h2>
+        {/* 4. Caveats — last, because the reader has already absorbed
+            what the score does mean. Honest about the limits. */}
+        <h2 className="mt-10 text-xl font-semibold text-primary">What the score can't tell you</h2>
         <ul className="mt-3 list-disc space-y-1.5 pl-6 text-sm text-foreground/90">
           <li>
-            It is not a measure of how likely you are to be attacked. It's a measure of how much
-            public exposure exists for an attacker to start with.
+            <b>It's not a prediction of attack.</b> The number measures how much public exposure
+            exists for an attacker to start with — not the likelihood that anyone will actually
+            target you.
           </li>
           <li>
-            It does not account for what you've already done about each finding (rotated passwords,
-            enabled 2FA, etc.) — SocialProof can't see that.
+            <b>It doesn't see what you've already fixed.</b> Rotated passwords, enabled 2FA,
+            removed your real name from GitHub — SocialProof can't see any of that, so a 60 today
+            might be a 30 in reality if you've been remediating quietly.
           </li>
           <li>
-            It is not comparable across users in a meaningful way. Two people with the same score
-            may face very different real-world risk depending on their threat model.
+            <b>It's not comparable across people.</b> Two users with the same score may face very
+            different real-world risk depending on threat model — a public-figure 50 is meaningfully
+            different from a private-individual 50.
           </li>
         </ul>
       </main>

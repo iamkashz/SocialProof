@@ -400,8 +400,8 @@ function PasteRender({ data }: { data: any }) {
         {redactedCount > 0 ? (
           <div className="space-y-1.5">
             <div className="text-warning">
-              <K>{redactedCount}</K> additional hit{redactedCount === 1 ? "" : "s"}{" "}
-              in leak corpora — counted as exposure evidence.
+              <K>{redactedCount}</K> hit{redactedCount === 1 ? "" : "s"} found in leak
+              databases.
             </div>
             <div className="flex flex-wrap gap-1.5">
               {Object.entries(redactedBuckets).map(([bucket, count]) => (
@@ -447,8 +447,8 @@ function PasteRender({ data }: { data: any }) {
       {redactedCount > 0 ? (
         <div className="space-y-1.5">
           <div className="text-xs text-muted-foreground">
-            Plus <K>{redactedCount}</K> additional hit
-            {redactedCount === 1 ? "" : "s"} in leak corpora:
+            Plus <K>{redactedCount}</K> hit
+            {redactedCount === 1 ? "" : "s"} in leak databases:
           </div>
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(redactedBuckets).map(([bucket, count]) => (

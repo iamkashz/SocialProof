@@ -62,8 +62,9 @@ function Author() {
           <div>
             <div className="font-mono text-xl text-primary">$ whoami</div>
             <h1 className="mt-1 text-3xl font-semibold tracking-tight">Kashz</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Security Engineer · Trained to break stuff, getting paid to secure it.
+            <p className="mt-2 text-sm text-muted-foreground">Security Engineer</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Trained to break stuff, getting paid to secure it.
             </p>
           </div>
         </div>

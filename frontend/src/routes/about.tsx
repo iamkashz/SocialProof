@@ -67,9 +67,8 @@ function About() {
             Public profile URLs on GitHub, Docker Hub, PyPI, Twitch, Keybase, HackerNews, Dev.to
           </li>
           <li>
-            <span className="font-mono">user-scanner</span> (community OSINT library) — probes 100+
-            public services for account-existence side channels; we skip the adult, news, jobs,
-            sports, and CRM categories
+            <span className="font-mono">user-scanner</span> — probes 100+ public services for
+            account-existence side channels
           </li>
         </ul>
 
