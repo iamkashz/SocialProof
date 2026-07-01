@@ -32,7 +32,7 @@ function Methodology() {
           </Link>
         </div>
         <h1 className="text-3xl font-semibold tracking-tight">How SocialProof works</h1>
-        <p className="mt-3 max-w-3xl text-muted-foreground">
+        <p className="mt-3 text-muted-foreground">
           A single email address travels through six specialized agents. Most are deterministic
           Python — only the parts that need language understanding (handle discovery from prose,
           executive summary) call Gemini. The diagram below auto-plays once to show the flow.
@@ -71,8 +71,8 @@ function Methodology() {
           />
           <StageCard
             label="Report Narrator"
-            sub="LLM (Gemini)"
-            body="Reads the finalized findings and writes a 5-section markdown summary with severity pills and an attacker-perspective walkthrough. Cannot affect the score — it's text generation on settled data."
+            sub="LLM (Gemini) + output guardrail"
+            body="Reads the finalized findings and writes a 5-section markdown summary with severity pills and an attacker-perspective walkthrough. Every section is validated before it reaches the user — hallucinated handles or names are dropped section-by-section, so a single confabulated line can't poison the whole report. Cannot affect the score either way; text generation runs on settled data."
           />
         </div>
 

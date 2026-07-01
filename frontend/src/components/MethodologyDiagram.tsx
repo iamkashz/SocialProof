@@ -52,7 +52,7 @@ const TOTAL_STEPS = SEQUENCE.length;
 // flow is more glanceable. Page-hosted on /methodology where it can
 // breathe; on /about it's just a teaser link.
 const W = 820;
-const H = 940;
+const H = 970;
 
 // Column anchors
 // Recon row now has 5 nodes (added Account Enum). Even spacing centered
@@ -81,7 +81,7 @@ const cy = {
   loopLabel: 622,
   analyst: 700,
   narrator: 805,
-  report: 900,
+  report: 930,
 };
 
 const BOX = { w: 140, h: 46 };
@@ -149,7 +149,7 @@ const NODES: NodeDef[] = [
     h: SMALL.h,
     kind: "deterministic",
     label: "Account Enum",
-    sub: "user-scanner · 100+",
+    sub: "user-scanner",
   },
   {
     id: "gravatar",
@@ -189,7 +189,7 @@ const NODES: NodeDef[] = [
     h: SMALL.h,
     kind: "deterministic",
     label: "Account Enumeration",
-    sub: "user-scanner · ~95",
+    sub: "user-scanner",
   },
   {
     id: "pivot",
@@ -209,7 +209,7 @@ const NODES: NodeDef[] = [
     h: SMALL.h,
     kind: "llm",
     label: "Handle Discovery",
-    sub: "Gemini · prose mining",
+    sub: "Gemini",
   },
   {
     id: "analyst",
@@ -428,12 +428,54 @@ export function MethodologyDiagram() {
             ↻ until no new handles discovered
           </text>
 
+          {/* Output-guardrail annotation on the narrator → report edge.
+              Centered on the arrow line — the card-colored fill hides
+              the arrow segment behind the label so it reads cleanly. */}
+          {(() => {
+            const active = step >= stepForNode("narrator") + 1;
+            const color = active
+              ? "var(--color-warning)"
+              : "var(--color-muted-foreground)";
+            const centerY = (cy.narrator + cy.report) / 2;
+            const boxW = 138;
+            const boxH = 20;
+            const boxX = cx.center - boxW / 2;
+            const boxY = centerY - boxH / 2;
+            return (
+              <g style={{ transition: "opacity 250ms ease", opacity: active ? 1 : 0.6 }}>
+                <rect
+                  x={boxX}
+                  y={boxY}
+                  width={boxW}
+                  height={boxH}
+                  fill="var(--color-card)"
+                />
+                <text
+                  x={cx.center}
+                  y={centerY + 3.5}
+                  textAnchor="middle"
+                  fontSize={10}
+                  fill={color}
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    transition: "fill 250ms ease",
+                  }}
+                >
+                  output guardrails
+                </text>
+              </g>
+            );
+          })()}
+
           {/* Nodes */}
           {NODES.map((n) => (
             <Node key={n.id} node={n} active={step >= stepForNode(n.id) + 1} />
           ))}
         </svg>
       </div>
+
     </div>
   );
 }

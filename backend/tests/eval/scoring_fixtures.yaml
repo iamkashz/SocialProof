@@ -1,0 +1,261 @@
+# Scoring eval fixtures for `correlate_risk`.
+#
+# Each row is one realistic-shape input vector to the scoring function
+# with the expected score + severity band it should produce.
+#
+# Coverage goals:
+#   - All four severity bands (Low / Moderate / High / Critical) exercised
+#   - Each category's caps and interaction terms exercised
+#   - Password-leak floor rule proven both ways (floor fires + floor irrelevant)
+#   - Overlap decomposition proven (primary+secondary account counts)
+#
+# Score tolerance: +/- 2 points to absorb log/rounding drift. Severity
+# must match exactly since that's what the UI actually renders.
+
+cases:
+  # -------- Low band (0-19) --------
+  - id: low_minimal
+    description: Privacy-conscious user, near-zero footprint.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 2
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 0
+      account_registration_count: 3
+    expected_score: 10
+    expected_severity: Low
+
+  - id: low_single_platform
+    description: One username, one platform, no exposure signals.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 1
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 1
+      account_registration_count: 1
+    expected_score: 8
+    expected_severity: Low
+
+  # -------- Moderate band (20-44) --------
+  - id: moderate_developer_no_breach
+    description: Active developer with public profile fields; no breach data.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 2
+      public_account_count: 8
+      real_name_exposed: true
+      location_exposed: true
+      linked_username_count: 2
+      account_registration_count: 10
+    expected_score: 40
+    expected_severity: Moderate
+
+  - id: moderate_registrations_only
+    description: Broad service registration but no identity or breach exposure.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 4
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 1
+      account_registration_count: 15
+    expected_score: 21
+    expected_severity: Moderate
+
+  - id: moderate_name_only_no_location
+    description: Real name exposed but no location; the interaction bonus MUST NOT fire.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 5
+      real_name_exposed: true
+      location_exposed: false
+      linked_username_count: 1
+      account_registration_count: 6
+    expected_score: 24
+    expected_severity: Moderate
+
+  # -------- High band (45-69) --------
+  - id: high_two_breaches_with_passwords
+    description: 2 breaches with passwords exposed, some paste presence.
+    inputs:
+      breach_count: 2
+      password_exposed: true
+      exposed_data_class_count: 4
+      paste_hit_count_visible: 1
+      paste_hit_count_redacted: 4
+      public_account_count: 6
+      real_name_exposed: true
+      location_exposed: false
+      linked_username_count: 1
+      account_registration_count: 8
+    expected_score: 56
+    expected_severity: High
+
+  - id: high_no_breach_full_identity
+    description: No breaches but broad identity + attack surface + leak corpus.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 3
+      paste_hit_count_redacted: 12
+      public_account_count: 15
+      real_name_exposed: true
+      location_exposed: true
+      linked_username_count: 3
+      account_registration_count: 20
+    expected_score: 60
+    expected_severity: High
+
+  # -------- Critical band (70-100) --------
+  - id: critical_heavy_exposure
+    description: Extensively breached with passwords, pastes, full identity, many accounts.
+    inputs:
+      breach_count: 6
+      password_exposed: true
+      exposed_data_class_count: 7
+      paste_hit_count_visible: 5
+      paste_hit_count_redacted: 26
+      public_account_count: 24
+      real_name_exposed: true
+      location_exposed: true
+      linked_username_count: 3
+      account_registration_count: 30
+    expected_score: 91
+    expected_severity: Critical
+
+  - id: critical_at_bottom_of_band
+    description: Just barely Critical — every category has real evidence but none maxes.
+    inputs:
+      breach_count: 3
+      password_exposed: true
+      exposed_data_class_count: 5
+      paste_hit_count_visible: 2
+      paste_hit_count_redacted: 6
+      public_account_count: 8
+      real_name_exposed: true
+      location_exposed: true
+      linked_username_count: 2
+      account_registration_count: 12
+    expected_score: 76
+    expected_severity: Critical
+
+  # -------- Floor rule (password_exposed forces >= 25) --------
+  - id: floor_single_breach_password
+    description: One breach with password, nothing else — floor rule forces Moderate.
+    inputs:
+      breach_count: 1
+      password_exposed: true
+      exposed_data_class_count: 2
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 0
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 0
+      account_registration_count: 0
+    expected_score: 25
+    expected_severity: Moderate
+
+  - id: floor_irrelevant_when_natural_score_higher
+    description: Natural score already above floor — floor rule doesn't change anything.
+    inputs:
+      breach_count: 3
+      password_exposed: true
+      exposed_data_class_count: 5
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 3
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 0
+      account_registration_count: 5
+    expected_score: 37
+    expected_severity: Moderate
+
+  # -------- Overlap handling: public_account vs registration --------
+  - id: overlap_public_dominates
+    description: public_account_count larger; it's the primary signal.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 15
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 0
+      account_registration_count: 3
+    expected_score: 19
+    expected_severity: Low
+
+  - id: overlap_registration_dominates
+    description: Symmetric case — registration larger, same math.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 3
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 0
+      account_registration_count: 15
+    expected_score: 19
+    expected_severity: Low
+
+  # -------- Category caps hit explicitly --------
+  - id: cap_credential_maxes_alone
+    description: Credential Exposure alone maxes at 25 — never contributes more.
+    inputs:
+      breach_count: 10
+      password_exposed: true
+      exposed_data_class_count: 12
+      paste_hit_count_visible: 0
+      paste_hit_count_redacted: 0
+      public_account_count: 0
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 0
+      account_registration_count: 0
+    expected_score: 25
+    expected_severity: Moderate
+
+  - id: cap_leak_maxes_alone
+    description: Leak Presence alone maxes at 25.
+    inputs:
+      breach_count: 0
+      password_exposed: false
+      exposed_data_class_count: 0
+      paste_hit_count_visible: 20
+      paste_hit_count_redacted: 40
+      public_account_count: 0
+      real_name_exposed: false
+      location_exposed: false
+      linked_username_count: 0
+      account_registration_count: 0
+    expected_score: 25
+    expected_severity: Moderate

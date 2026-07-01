@@ -238,7 +238,7 @@ _ALLOWED_PROSE_WORDS = frozenset(
 _HALLUCINATED_HANDLE_PATTERNS = (
     re.compile(r"\buser[_-]?\d+\b", re.IGNORECASE),
     re.compile(r"\buser[_-]?(alpha|beta|gamma|x|y|z)\b", re.IGNORECASE),
-    re.compile(r"\b<[A-Z_]+>\b"),  # leaked <PLACEHOLDER> tokens from the prompt
+    re.compile(r"<[A-Z][A-Z_]{2,}>"),  # leaked <PLACEHOLDER> tokens from the prompt
 )
 
 # Common first names the LLM tends to confabulate. Not exhaustive — the

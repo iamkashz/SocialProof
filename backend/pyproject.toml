@@ -95,6 +95,14 @@ build-backend = "hatchling.build"
 [tool.pytest.ini_options]
 pythonpath = "."
 asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    # ADK's deprecation warnings for the workflow primitives we use —
+    # migration path exists but is out of scope for now.
+    "ignore:BaseAgentConfig is deprecated:DeprecationWarning",
+    "ignore:SequentialAgent is deprecated:DeprecationWarning",
+    "ignore:ParallelAgent is deprecated:DeprecationWarning",
+    "ignore:LoopAgent is deprecated:DeprecationWarning",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["app","frontend"]

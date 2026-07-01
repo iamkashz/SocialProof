@@ -1,0 +1,159 @@
+# Narrator output-validator eval fixtures.
+#
+# Each row simulates an LLM response the narrator might produce, paired
+# with the structured scan state that should be used to validate it.
+# The runner calls _filter_narrator_output(llm_text, state) and asserts:
+#   - Every section listed in `expected_kept` survives.
+#   - Every section listed in `expected_dropped` is rejected.
+#   - `total_rejections` matches the number of rejected sections.
+#
+# The `state` shape below is the minimal subset _build_allowed_token_set
+# reads. Fields not needed for the specific case can be omitted; the
+# helper handles missing keys.
+
+cases:
+  # -------- Clean outputs (no hallucination — everything must survive) --------
+  - id: clean_output_all_real_data
+    description: All handles/services/names in the state — nothing should be dropped.
+    state:
+      candidate_usernames: ["kashz"]
+      breach_result:
+        breaches: [{name: "LinkedIn"}]
+        exposed_data_classes: ["Passwords"]
+      github_result:
+        profile:
+          name: "Alex Rivera"
+    llm_text: |
+      **Risk:** The risk score is 65/100 (High), driven by breach exposure.
+
+      **Do this first:** Rotate passwords on every breached service.
+
+      **Breaches:** One breach was identified, exposing Passwords.
+    expected_kept: ["**Risk:**", "**Do this first:**", "**Breaches:**"]
+    expected_dropped: []
+    total_rejections: 0
+
+  - id: clean_output_with_real_handle
+    description: Narrator references the real candidate username in backticks — must pass.
+    state:
+      candidate_usernames: ["realuser42"]
+    llm_text: |
+      **Risk:** Moderate exposure detected.
+
+      **Public identity:** The handle `realuser42` was discovered.
+    expected_kept: ["**Risk:**", "**Public identity:**"]
+    expected_dropped: []
+    total_rejections: 0
+
+  # -------- Hallucinated placeholder tokens (hard denylist) --------
+  - id: hallucinated_placeholder_user123
+    description: "`user123` is a common LLM confabulation — must be dropped."
+    state:
+      candidate_usernames: ["realuser"]
+    llm_text: |
+      **Risk:** High exposure.
+
+      **Public identity:** Confirmed handles include `user123` and `user_alpha`.
+    expected_kept: ["**Risk:**"]
+    expected_dropped: ["**Public identity:**"]
+    total_rejections: 1
+
+  - id: hallucinated_leaked_placeholder_syntax
+    description: LLM leaked the `<PLACEHOLDER>` syntax from the prompt itself.
+    state:
+      candidate_usernames: ["realuser"]
+    llm_text: |
+      **Risk:** Critical exposure.
+
+      **The attacker's path:** An attacker could use the <ACTUAL_USERNAME_FROM_LIST> handle.
+    expected_kept: ["**Risk:**"]
+    expected_dropped: ["**The attacker's path:**"]
+    total_rejections: 1
+
+  # -------- Backtick-quoted hallucinated handles --------
+  - id: backtick_handle_not_in_state
+    description: LLM invented a handle in backticks that isn't in the allowed set.
+    state:
+      candidate_usernames: ["realuser"]
+    llm_text: |
+      **Risk:** Moderate.
+
+      **Public identity:** The handle `shadowfish99` appears across platforms.
+    expected_kept: ["**Risk:**"]
+    expected_dropped: ["**Public identity:**"]
+    total_rejections: 1
+
+  # -------- Confabulated first names --------
+  - id: confabulated_first_name_jane
+    description: LLM invented the name "Jane" — must be rejected.
+    state:
+      candidate_usernames: ["realuser"]
+      github_result:
+        profile: {}
+    llm_text: |
+      **Risk:** High.
+
+      **Public identity:** The real name Jane was discovered on GitHub.
+    expected_kept: ["**Risk:**"]
+    expected_dropped: ["**Public identity:**"]
+    total_rejections: 1
+
+  - id: confabulated_first_name_john_when_real_name_absent
+    description: |
+      The state has NO github profile name at all — but the LLM invented "John".
+      This exact class of bug is what motivated adding the validator.
+    state:
+      candidate_usernames: ["kashz"]
+      github_result:
+        profile: {}
+    llm_text: |
+      **Risk:** High exposure.
+
+      **The attacker's path:** An attacker could contact John via the discovered handle.
+    expected_kept: ["**Risk:**"]
+    expected_dropped: ["**The attacker's path:**"]
+    total_rejections: 1
+
+  # -------- Real name in state — should PASS through --------
+  - id: real_name_in_state_survives
+    description: When the state contains "Alex Rivera", the name "Alex" is allowed.
+    state:
+      candidate_usernames: ["kashz"]
+      github_result:
+        profile:
+          name: "Alex Rivera"
+    llm_text: |
+      **Risk:** High.
+
+      **Public identity:** Real name Alex was discovered.
+    expected_kept: ["**Risk:**", "**Public identity:**"]
+    expected_dropped: []
+    total_rejections: 0
+
+  # -------- Multiple bad sections — mostly-empty salvage --------
+  - id: multiple_hallucinations_across_sections
+    description: Two sections trip the validator; only one clean section survives.
+    state:
+      candidate_usernames: ["real"]
+    llm_text: |
+      **Risk:** Critical exposure driven by breach + paste data.
+
+      **Public identity:** Confirmed handles `user123` and `user_alpha`.
+
+      **The attacker's path:** An attacker could target Jane at the discovered address.
+    expected_kept: ["**Risk:**"]
+    expected_dropped: ["**Public identity:**", "**The attacker's path:**"]
+    total_rejections: 2
+
+  # -------- All sections hallucinate — full rejection --------
+  - id: all_sections_hallucinate
+    description: Every section trips the validator; salvage returns empty.
+    state:
+      candidate_usernames: ["real"]
+    llm_text: |
+      **Risk:** High for user `user123`.
+
+      **Public identity:** Alex was discovered as the real name.
+    expected_kept: []
+    expected_dropped: ["**Risk:**", "**Public identity:**"]
+    total_rejections: 2
