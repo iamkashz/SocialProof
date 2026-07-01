@@ -508,30 +508,51 @@ function PasteRender({ data }: { data: any }) {
  * not-found ones would visually drown the signal; the header still
  * shows the X-of-Y count so the user knows the breadth of coverage.
  */
+// Platform tiles link out only when the URL actually resolves to a
+// useful public artifact. Two reasons a tile is NOT linkable:
+//   1. The upstream returned only the site homepage (no per-user page),
+//      which is what user-scanner does for email-keyed probes.
+//   2. The platform has a per-user URL, but visiting it requires login,
+//      returns a soft 404, or otherwise gives the visitor nothing —
+//      those go on the denylist below.
+// Match is case-insensitive against the platform / site_name string.
+const _UNLINKABLE_PLATFORMS = new Set([
+  "apple developer",
+  "appledeveloper",
+  "codecademy",
+  "ifttt",
+  "pinterest",
+  "replit",
+]);
+
+function _shouldLink(label: string | undefined, url: string | undefined): boolean {
+  if (!label || !url) return false;
+  if (_UNLINKABLE_PLATFORMS.has(label.toLowerCase().trim())) return false;
+  return true;
+}
+
 function AccountEnumRender({ data }: { data: any }) {
-  // Each tile knows whether its URL points to a per-user profile page
-  // (worth linking — Twitch, GitHub, Dev.to under a specific handle) or
-  // just the site homepage (not worth linking — Amazon, Office365, etc.
-  // for email-side hits, since user-scanner can't construct a per-user
-  // URL from an email-keyed probe).
   const items: Array<{ label: string; url?: string; linkable: boolean }> = [];
   let identity: string | undefined;
 
   if (Array.isArray(data?.accounts)) {
-    // user-scanner email-side shape. URLs here are site homepages
-    // ("https://amazon.com", "https://office365.com") because the probe
-    // is email-keyed — there's no public profile URL to deep-link to.
+    // user-scanner email-side shape. URLs here are usually site homepages
+    // (no per-user profile URL from an email probe) — never linkable.
     for (const a of data.accounts) {
       if (!a?.site_name) continue;
       items.push({ label: a.site_name, url: a.url, linkable: false });
     }
   } else if (Array.isArray(data?.platforms)) {
-    // Username-keyed shape. URLs point at the actual public profile
-    // page for the discovered handle — worth linking.
+    // Username-keyed shape. URLs point at a public profile page for the
+    // discovered handle — linkable unless the platform is on the denylist.
     identity = data.username;
     for (const p of data.platforms) {
       if (!p?.exists || !p?.platform) continue;
-      items.push({ label: p.platform, url: p.url, linkable: true });
+      items.push({
+        label: p.platform,
+        url: p.url,
+        linkable: _shouldLink(p.platform, p.url),
+      });
     }
   }
 
