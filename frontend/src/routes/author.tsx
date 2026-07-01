@@ -1,6 +1,6 @@
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { createFileRoute } from "@tanstack/react-router";
-import { Globe, Linkedin, Loader2, Mail } from "lucide-react";
+import { Globe, Linkedin, Mail } from "lucide-react";
 
 // Discord doesn't ship in lucide-react. We use the official mark from
 // /public/img/discord.png and wrap it as a component matching lucide's
@@ -30,17 +30,6 @@ export const Route = createFileRoute("/author")({
   }),
   component: Author,
 });
-
-type Cert = { label: string; href?: string };
-
-// Current focus. One entry at a time so the section stays a punchy
-// "here's what I'm reading right now" line, not a roadmap.
-const IN_PROGRESS: Cert[] = [
-  {
-    label: "SANS SEC545: GenAI & LLM Application Security",
-    href: "https://www.sans.org/cyber-security-courses/genai-llm-application-security-5day",
-  },
-];
 
 function Author() {
   return (
@@ -90,19 +79,6 @@ function Author() {
           </p>
         </section>
 
-        {/* Currently working on — in-progress / current focus */}
-        <section className="mt-10">
-          <h2 className="flex items-center gap-2 text-xl font-semibold text-primary">
-            <Loader2 className="h-4 w-4" />
-            Currently working on
-          </h2>
-          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-            {IN_PROGRESS.map((c, i) => (
-              <CertRow key={i} cert={c} />
-            ))}
-          </ul>
-        </section>
-
         {/* Find me */}
         <section className="mt-10">
           <h2 className="text-xl font-semibold text-primary">Let's connect!</h2>
@@ -131,32 +107,6 @@ function Author() {
       </main>
       <SiteFooter />
     </div>
-  );
-}
-
-/** Compact row for a current-focus cert. */
-function CertRow({ cert }: { cert: Cert }) {
-  const inner = <span className="text-sm leading-tight">{cert.label}</span>;
-  if (cert.href) {
-    return (
-      <li>
-        <a
-          href={cert.href}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/40 px-3 py-2 transition hover:border-primary/30 hover:bg-card/60"
-        >
-          {inner}
-        </a>
-      </li>
-    );
-  }
-  return (
-    <li>
-      <div className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-card/40 px-3 py-2">
-        {inner}
-      </div>
-    </li>
   );
 }
 
