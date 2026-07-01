@@ -106,8 +106,8 @@ function About() {
         {/* 5. Coming soon */}
         <h2 className="mt-10 text-xl font-semibold text-primary">Coming soon</h2>
         <p className="mt-3 text-sm text-muted-foreground">
-          Future integrations planned for deeper coverage. Several require paid APIs or a longer
-          build than the current capstone scope.
+          Future integrations planned for deeper coverage. Several require paid APIs or additional
+          engineering time.
         </p>
         <ul className="mt-3 list-disc space-y-1.5 pl-6 text-sm text-foreground/90">
           <li>

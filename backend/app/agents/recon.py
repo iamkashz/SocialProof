@@ -1,14 +1,10 @@
-"""Phase 1 — three specialists each query one OSINT source in parallel.
+"""Parallel recon: each specialist queries one OSINT source.
 
-Engineering decision: these are deterministic BaseAgents, not LlmAgents.
-Each one calls a single OSINT function with a single argument (the email
-from state). An LLM here would just be an expensive function dispatcher —
-no reasoning happens — and tripling the model call count per scan would
-burn the free-tier quota in 6 scans.
-
-The UI still gets one tool_call + tool_response pair per source because we
-synthesize those events inside _run_async_impl. The data shape on the wire
-is unchanged from the LlmAgent version.
+Implemented as deterministic BaseAgents rather than LlmAgents — every
+step here is a fixed function call with a single email argument, so an
+LLM would add cost with no reasoning benefit. Synthesized
+function_call/function_response events preserve the tool-card UX in
+the React timeline.
 """
 
 from __future__ import annotations

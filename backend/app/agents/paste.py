@@ -1,14 +1,9 @@
 """Paste-site / leak agent — IntelligenceX integration.
 
-A deterministic BaseAgent (same pattern as recon agents): emits a synthetic
-function_call/function_response pair so the UI renders one card, and writes
-the result to state['paste_result'].
-
-Positioned after recon and before identity so that paste-title text becomes
-visible to downstream agents, but does NOT itself contribute usernames to
-the pivot loop — paste titles are noisy (file paths, zip member names) and
-mining them for handles would inflate the false-positive rate. The risk
-score reflects paste hits independently via the analyst.
+Deterministic BaseAgent that queries IntelX and writes results to
+state['paste_result']. Paste titles are deliberately not mined for
+usernames — they're too noisy — but hit counts feed the risk score
+via the analyst.
 """
 
 from __future__ import annotations

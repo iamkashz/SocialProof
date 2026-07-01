@@ -1,16 +1,8 @@
-"""user-scanner wrapper.
+"""user-scanner wrapper (email-side account enumeration).
 
-user-scanner is a community OSINT tool (kaifcodec, MIT, PyPI) that
-probes 100+ services for account-existence side channels (signup,
-password-reset, profile lookup, etc.).
-
-We call `engine.check_category` per kept category in parallel rather
-than `run_email_full_batch` because the latter scans ALL categories
-and there's no built-in category skip. Filtering after-the-fact still
-hits the wire for sites we don't want, costing scan time and IP load.
-Calling only the kept categories cuts ~25 unnecessary HTTP probes
-(news 7 + sports 3 + jobs 1 + crm 4 + adult 12) per scan and avoids
-flagging the user's IP for sites they didn't ask to probe.
+Calls `engine.check_category` per kept category in parallel. Skipped
+categories are excluded at request time — not filtered from results —
+so probes we don't want never leave the box.
 """
 
 from __future__ import annotations

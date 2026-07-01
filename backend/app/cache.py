@@ -1,32 +1,14 @@
 """Daily file-cache for scan results.
 
-Engineering decisions:
+Keyed by sha256(email) + calendar day so the filename itself never
+contains the raw address. Stores the SSE event stream (not the final
+state) so replay renders identically to a live scan. Failed scans are
+not cached; recoverable warnings are.
 
-1. **Day-bucketed by sha256(email).** One scan per email per calendar day.
-   This is conservative — OSINT sources change slowly, the user is mostly
-   re-running for demo/iteration purposes. Hashing the email avoids
-   PII-shaped filenames on disk.
-
-2. **Stores the SSE event stream, not the final state.** On a cache hit we
-   replay the recorded frames in order, so the UI's existing event handler
-   needs no changes and renders identically to a fresh scan (timeline,
-   tool cards, risk gauge, summary).
-
-3. **Cache writes happen after the stream ends.** We tee every frame into
-   a list during the live stream, then persist on `done`. Failed scans
-   (those that emitted an `error` frame) are NOT cached — the user would
-   be stuck replaying a broken result. Recoverable `warning` frames ARE
-   cached: the data was valid, only the narrator failed.
-
-4. **Cache directory is relative to the project root.** When this is
-   hosted, the working directory may not match the source layout, so we
-   anchor on `__file__`'s parent rather than `os.getcwd()`. Falls back
-   gracefully if the directory is read-only.
-
-5. **No size cap, no eviction.** Day-bucketed + email-hashed means at
-   most one file per unique email per day. For a capstone demo this will
-   never grow beyond a few hundred files. If this ever ships for real,
-   add a cron to delete files older than N days.
+Cache directory is anchored to `__file__` rather than `os.getcwd()`
+so it stays stable regardless of where the server is launched. No
+eviction — cardinality is bounded by (unique emails * days), which
+stays small in practice.
 """
 
 from __future__ import annotations

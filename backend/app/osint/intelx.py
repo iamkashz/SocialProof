@@ -1,35 +1,17 @@
 """IntelligenceX paste-site and leak search.
 
-Engineering decisions:
+Metadata-only — we list records via `/intelligent/search/result` and
+never fetch content via `/file/read` or `/file/view`. Bucket + title +
+date is enough to score risk without spending download credits.
 
-1. **Metadata only.** We hit `/intelligent/search` then `/intelligent/search/
-   result` to list hits, and stop there. We deliberately do NOT call
-   `/file/read` or `/file/view`, both of which have a 100/day cap on the
-   free tier (vs 50/day for searches). The existence of a hit + its bucket
-   + its title is enough to score risk; downloading the leak content costs
-   one credit per hit and yields nothing the user can act on in this tool.
+Bucket scope:
+  - Listed (visible): pastes, leaks.public, darknet, dumpster.
+  - Counted only (redacted content, count-visible via
+    `/intelligent/search/statistic`): leaks.logs, leaks.private.
+  - Whois/DNS/Usenet/gov-archives are excluded — noise for self-scans.
 
-2. **Bucket scope, two tiers.**
-   - We *list* records from `pastes`, `leaks.public`, `darknet`, `dumpster`.
-     Those are the buckets the free tier returns content/metadata for.
-   - We *also* request `leaks.logs` and `leaks.private` in the same search.
-     Their per-record content is redacted on the free tier, but the
-     `/intelligent/search/statistic` endpoint reports the per-bucket hit
-     count even for redacted buckets. So we can know "this email appears
-     in N redacted leak corpora" without paying — strong corroborating
-     signal even though we can't surface the records themselves.
-   - The rest of IntelX's index (Whois, DNS, Usenet, government archives)
-     returns false-positive noise for self-scans and is excluded.
-
-3. **Conservative timeout + early termination.** Search jobs run async on
-   IntelX's side; we poll for up to ~8s and explicitly terminate the job
-   when we have enough results. If we time out, we surface what we have
-   rather than blocking the scan.
-
-4. **No raw secrets leak.** Hit titles can occasionally contain plaintext
-   credentials in the snippet. We return only the bucket name, item ID
-   (for the user to look up themselves on intelx.io), date, and a
-   redacted-to-100-chars title. Never the full snippet.
+Hit titles can contain plaintext credential fragments, so we truncate
+to 100 chars and never return raw snippets.
 """
 
 from __future__ import annotations

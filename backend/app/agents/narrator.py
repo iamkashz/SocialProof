@@ -1,26 +1,12 @@
-"""Phase 5 — narrator agent.
+"""Narrator: generate a markdown executive summary from scan findings.
 
-Generates a 3-5 sentence markdown executive summary from the deterministic
-state already in the session.
+Calls Gemini directly (not via LlmAgent) so we can walk a model
+fallback ladder on 429/503 and enforce strict output schemas without
+ADK's tool-calling machinery.
 
-Engineering decisions:
-
-1. Implemented as a BaseAgent that calls the genai client directly rather
-   than an LlmAgent. This is the only place the project uses an LLM, and
-   the work is purely text generation from fully-formed structured data —
-   we don't need ADK's tool-calling machinery here, and bypassing it lets
-   us implement a model fallback ladder cleanly.
-
-2. **Model fallback ladder.** Gemini's free tier has per-model daily quota.
-   When 2.5-flash returns 429, 2.5-flash-lite typically still has budget.
-   We try each model in order on 429/503 and surface the first success.
-   This protects against the most common transient failure modes without
-   any upstream changes.
-
-3. The prompt forbids inventing data. Tone is enforced via instruction. The
-   risk score the UI renders comes from the deterministic correlate_risk
-   step — even if this agent fails entirely, the user-facing report is
-   still complete (the server emits a `warning` frame in that case).
+If the narrator fails entirely, the server emits a warning frame and
+the deterministic risk report still renders — nothing here can affect
+the score.
 """
 
 from __future__ import annotations

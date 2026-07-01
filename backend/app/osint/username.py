@@ -1,28 +1,9 @@
 """Username enumeration via user-scanner.
 
-Historical note: this module used to ship 7 hand-rolled per-platform
-predicates (GitHub, Docker Hub, PyPI, Twitch, Keybase, HackerNews,
-Dev.to). user-scanner v1.4.1.1 covers all 7 with strictly richer
-extractors — same existence signal plus profile metadata (commit
-history snapshots, social-account links, Keybase proofs, PyPI package
-lists) the hand-rolled checkers never gathered.
-
-This module is now a thin shape adapter:
-  - Calls user-scanner's `engine.check_category` across four OSINT-
-    relevant categories (social, dev, creator, community).
-  - Applies the same category/site skip lists as the email wrapper.
-  - Returns the {username, total_checked, exists_count, platforms}
-    envelope downstream code (analyst, narrator, React UI) already
-    expects, so nothing else has to change.
-
-Categories we DON'T scan and why:
-  - adult, political, finance, donation, shopping: not useful pivot
-    targets for the SocialProof use case.
-  - email: only one module (protonmail), and Gravatar/breach signals
-    already cover address-level email checks.
-  - other, gaming, music: noisy / mostly non-actionable for an OSINT
-    investigation focused on attack-surface mapping. Easy to flip on
-    later if eval shows we're missing signal.
+Thin shape adapter around `engine.check_category`: probes the four
+OSINT-relevant category directories (social, dev, creator, community)
+and returns the canonical {username, total_checked, exists_count,
+platforms} envelope the analyst and UI expect.
 """
 
 from __future__ import annotations

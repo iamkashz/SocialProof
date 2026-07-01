@@ -1,40 +1,22 @@
-"""LLM-driven handle discovery — the second LLM call in the graph.
+"""LLM-driven handle discovery inside the pivot loop.
 
-Inside the pivot loop, this agent does what the deterministic
-`IdentityAgent` cannot: read PROSE fields from recon outputs (breach
-descriptions, github commit messages, github bios, gravatar aboutMe) and
-spot usernames the regex-based aggregator missed.
+Reads prose fields (breach descriptions, github commit messages, bios,
+gravatar aboutMe) for usernames that the regex-based identity
+aggregator can't catch — e.g. handles mentioned in a bio or commit
+message body.
 
-The deterministic identity aggregator already extracts handles from
-structured fields (login, twitter_username, accounts[].shortname, etc.).
-What it can't catch:
-    - "...credentials posted by user 'shadowfish99' on the dump site"
-       in a breach description.
-    - "merge from @junior-dev" in a commit message body.
-    - "find me on discord as #ShadowFish" in a bio.
-
-Engineering decisions:
-
-1. **Strict output schema.** The model returns ONLY a JSON list of
-   strings. Anything else gets rejected client-side. We also sanitize
-   each returned name: alphanumeric + `._-`, length 3-30. Hallucinated
-   garbage either gets filtered here or is harmless — username_enum will
-   probe it and find nothing, which is the same outcome as the regex
-   sanitizer dropping it.
-
-2. **Cap at 3 per call.** Prevents a hallucinating model from flooding
-   the pivot loop with 30 made-up handles. Pivot loop's per-iteration
-   `_MAX_PIVOTS_PER_ROUND = 3` would clamp this anyway; we enforce here
-   too so the candidate list stays sensible in the report.
-
-3. **Exclude known candidates from the prompt.** Saves tokens, makes the
-   "only NEW handles" contract explicit, prevents the model from
-   confidently repeating itself.
-
-4. **Recoverable failure.** If the model fails (quota, malformed JSON,
-   timeout), we emit an empty result instead of raising. Discovery is a
-   *bonus* over the deterministic aggregator — better to lose nothing
-   than to fail the whole scan because Gemini blinked.
+Safety rails:
+  - Output is constrained to a JSON list; anything else is dropped.
+  - Returned handles are sanitized (alphanumeric + `._-`, length 3-30)
+    and matched against a tool-name blocklist to catch common false
+    positives.
+  - Capped at 3 handles per call so a hallucinating model can't flood
+    the pivot loop.
+  - Known candidates are excluded from the prompt so the model can
+    only surface *new* handles.
+  - Failure is non-fatal: an empty result is returned instead of
+    raising, since discovery is bonus signal over the deterministic
+    aggregator.
 """
 
 from __future__ import annotations

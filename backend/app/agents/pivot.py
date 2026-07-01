@@ -1,24 +1,17 @@
-"""Phase 3 — username pivot loop.
+"""Username pivot loop.
 
 Each iteration:
-  1. username_enum_agent  — for each fresh candidate, run user-scanner's
-                            username scan (~95 modules across social, dev,
-                            creator, community categories) in parallel. All
-                            fresh usernames probe concurrently via
-                            asyncio.as_completed so the slowest single
-                            probe — not their sum — dominates wall-clock.
-  2. profile_pivot_agent  — fetch the GitHub profile for each fresh
-                            candidate; new profiles may yield more linked
-                            usernames (twitter_username, blog handle,
-                            alternate logins in commit history). Also runs
-                            in parallel.
-  3. identity_agent (re-run at top of next iteration via the outer loop's
-                            sequential structure) — recomputes candidate
-                            set and decides whether to escalate.
+  1. username_enum_agent  — probe fresh candidates across user-scanner's
+                            username modules in parallel.
+  2. profile_pivot_agent  — fetch GitHub profiles for fresh candidates
+                            in parallel; new profiles may yield further
+                            linked usernames.
+  3. identity_agent       — re-aggregates the candidate set so the
+                            guard can decide whether to iterate again.
 
-The loop is bounded by max_iterations=2. Per-iteration fan-out is
-clamped by _MAX_PIVOTS_PER_ROUND so a hallucinating handle-discovery
-pass can't explode the work into hundreds of probes.
+Bounded by max_iterations=2. Per-iteration fan-out is clamped by
+_MAX_PIVOTS_PER_ROUND to keep total work predictable even when handle
+discovery gets creative.
 """
 
 from __future__ import annotations
@@ -85,14 +78,10 @@ def _emit_tool_response(
 class UsernameEnumAgent(BaseAgent):
     """Run username_enum against every fresh candidate concurrently.
 
-    All probes are fired in parallel — each fresh username has its own
-    async task, and each task's tool_call event is yielded *before* the
-    network work starts. Tool_response events are yielded as each task
-    completes (via asyncio.as_completed), so the React timeline lights
-    up N "Running" cards immediately and ticks them green out of order
-    as fastest probes finish first. Previously this loop awaited each
-    probe sequentially — 3 usernames at ~15s each was the dominant
-    bottleneck in the pivot phase.
+    Each username gets its own async task. The tool_call event is
+    yielded before the network work starts so the UI shows a "Running"
+    card immediately; tool_response events land out of order as each
+    task completes, via asyncio.as_completed.
     """
 
     async def _run_async_impl(

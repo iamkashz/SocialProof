@@ -1,16 +1,10 @@
-"""Phase 2 — identity aggregator (deterministic, no LLM).
+"""Identity aggregator: collect candidate usernames from recon outputs.
 
-Reads recon outputs from session state, extracts every candidate username
-(github logins, gravatar preferred_username, breach mentions, twitter
-handles from the github profile, blog URLs that obviously contain a
-username segment), normalizes them, and writes a deduplicated list to
-state['candidate_usernames'].
-
-Implemented as a BaseAgent subclass instead of an LlmAgent because:
-  - The work is pure string manipulation — an LLM here is wasted tokens
-    and a non-determinism risk (could hallucinate usernames).
-  - Username candidates need consistent normalization so downstream eval
-    cases are reproducible.
+Reads github logins, gravatar preferred_username, breach mentions,
+twitter handles from github profile fields, and blog-URL fragments;
+normalizes them and writes a deduplicated list to
+state['candidate_usernames']. Pure string manipulation — deliberately
+not an LLM, to keep results reproducible.
 """
 
 from __future__ import annotations

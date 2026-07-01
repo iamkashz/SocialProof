@@ -1,14 +1,8 @@
-"""Phase 4 — analyst agent.
+"""Analyst: aggregate findings and compute the deterministic risk score.
 
-Reads everything the recon + pivot phases collected from session state,
-calls the deterministic correlate_risk scorer, and writes the result to
-state['risk_assessment'].
-
-Implemented as a BaseAgent (not an LlmAgent) for two reasons:
-  1. The scoring inputs come from a known schema in state — there's nothing
-     for an LLM to reason about.
-  2. Eliminating LLM involvement here means the risk score is reproducible
-     across runs, which the eval suite (TODO) will rely on.
+Reads recon + pivot outputs from session state, calls correlate_risk,
+and writes state['risk_assessment']. Deliberately not an LlmAgent —
+scoring must be reproducible.
 """
 
 from __future__ import annotations

@@ -40,9 +40,9 @@ type AdkEvent =
   | { type: "done" };
 
 /**
- * Drives a single OSINT scan against the Python ADK FastAPI endpoint and
- * exposes the same shape (`agentParts`, `assistantText`, `status`) that the
- * UI previously consumed from the AI SDK's `useChat`.
+ * Drives a single OSINT scan against the ADK FastAPI endpoint and exposes
+ * the streamed agent parts, executive summary, and lifecycle status the
+ * scan page renders from.
  */
 export function useAdkScan(
   email: string,
