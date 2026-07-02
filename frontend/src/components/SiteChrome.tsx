@@ -82,12 +82,6 @@ export function SiteHeader({ className }: { className?: string }) {
           >
             About
           </Link>
-          <Link
-            to="/author"
-            className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-surface hover:text-foreground"
-          >
-            Author
-          </Link>
         </nav>
       </div>
     </header>
@@ -98,7 +92,12 @@ export function SiteFooter() {
   return (
     <footer className="mt-24 border-t border-border/60 py-8 text-sm text-muted-foreground">
       <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-2 px-4 sm:flex-row sm:items-center">
-        <div>© {new Date().getFullYear()} SocialProof — Know what attackers know.</div>
+        <div>
+          © {new Date().getFullYear()} SocialProof · Know what attackers know |{" "}
+          <Link to="/author" className="hover:text-foreground hover:underline">
+            Built by Kashz
+          </Link>
+        </div>
         <div className="font-mono text-xs">Only scan emails you own or are authorized to scan.</div>
       </div>
     </footer>
