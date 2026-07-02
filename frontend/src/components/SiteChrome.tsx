@@ -56,8 +56,8 @@ export function SiteHeader({ className }: { className?: string }) {
           </span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
-          {/* Order follows visitor curiosity: demo first, then deeper
-              explanations in increasing depth, then trust signals. */}
+          {/* Demo first, then how it works (methodology → scoring),
+              then trust signals (about). */}
           <Link
             to="/sample"
             className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-surface hover:text-foreground"
@@ -65,16 +65,16 @@ export function SiteHeader({ className }: { className?: string }) {
             Sample
           </Link>
           <Link
-            to="/score"
-            className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-surface hover:text-foreground"
-          >
-            Scoring
-          </Link>
-          <Link
             to="/methodology"
             className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-surface hover:text-foreground"
           >
             Methodology
+          </Link>
+          <Link
+            to="/score"
+            className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-surface hover:text-foreground"
+          >
+            Scoring
           </Link>
           <Link
             to="/about"
