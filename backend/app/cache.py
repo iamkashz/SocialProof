@@ -22,10 +22,13 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Cache directory is anchored to the project (one level up from app/), so
-# the path is stable regardless of where the server is started from.
+# Cache directory. Default: anchored to the project (one level up from
+# app/) so the path is stable regardless of where the server is started
+# from. Override via RECENT_SCANS_DIR env var — set to /tmp/recent-scans
+# on Cloud Run where the project directory is read-only. Unset locally,
+# so behavior is unchanged in dev.
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_CACHE_DIR = _PROJECT_ROOT / "recent-scans"
+_CACHE_DIR = Path(os.environ.get("RECENT_SCANS_DIR", str(_PROJECT_ROOT / "recent-scans")))
 
 
 def _ensure_cache_dir() -> Path | None:

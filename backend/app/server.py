@@ -53,7 +53,19 @@ app = FastAPI(title="SocialProof ADK", description="OSINT scanner backed by Goog
 #  - 5/min: handles one real user clicking around, kills abuse loops
 #  - 30/hr: matches GitHub's unauthenticated ceiling — once we're capped
 #    there, more requests aren't producing useful scans anyway
-_limiter = Limiter(key_func=get_remote_address, default_limits=["30/hour", "5/minute"])
+
+
+def _client_ip(request: Request) -> str:
+    # Behind Cloud Run / any proxy: TCP peer is the proxy, real client IP
+    # rides in X-Forwarded-For. Locally there's no XFF header, so this
+    # falls straight through to the direct-peer address.
+    xff = request.headers.get("X-Forwarded-For")
+    if xff:
+        return xff.split(",")[0].strip()
+    return get_remote_address(request)
+
+
+_limiter = Limiter(key_func=_client_ip, default_limits=["30/hour", "5/minute"])
 app.state.limiter = _limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
@@ -310,6 +322,27 @@ async def scan(request: Request, req: ScanRequest) -> StreamingResponse:
 @app.get("/api/health")
 async def health() -> dict:
     return {"status": "ok", "agent": root_agent.name}
+
+
+# Optional single-service mode: serve the built React frontend from the
+# same FastAPI process. Cloud Run wants one container, one URL — so the
+# deploy pipeline runs `npm run build` and copies frontend/dist/ into
+# the image, then sets SERVE_FRONTEND=1. Local dev leaves this unset;
+# the React app is served by Vite on :5173 as before.
+if os.environ.get("SERVE_FRONTEND") == "1":
+    from pathlib import Path
+
+    from fastapi.staticfiles import StaticFiles
+
+    _frontend_dist = Path(
+        os.environ.get("FRONTEND_DIST", str(Path(__file__).resolve().parent.parent / "static"))
+    )
+    if _frontend_dist.is_dir():
+        # `html=True` makes StaticFiles serve index.html for directory
+        # requests AND for any 404 — the SPA-router fallback we need so
+        # a hard-reload on /methodology or /scan/<id> still renders the
+        # React app instead of a 404.
+        app.mount("/", StaticFiles(directory=str(_frontend_dist), html=True), name="frontend")
 
 
 if __name__ == "__main__":
