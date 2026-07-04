@@ -35,7 +35,7 @@ function Author() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl px-4 py-12">
+      <main className="mx-auto w-full max-w-6xl px-4 py-8">
         {/* Hero — avatar + name + tagline */}
         <div className="grid items-center gap-6 lg:grid-cols-[180px_1fr]">
           <div className="flex flex-col items-center">

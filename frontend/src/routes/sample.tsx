@@ -46,7 +46,7 @@ type SamplePreset = {
 const SAMPLES: SamplePreset[] = [
   {
     id: "high",
-    email: "iamkashifmemon@gmail.com",
+    email: "john.doe@gmail.com",
     label: "High risk",
     severity: "High",
     breach: {
@@ -73,33 +73,33 @@ const SAMPLES: SamplePreset[] = [
     },
     github: {
       commitCount: 113,
-      usernames: ["iamkashz"],
+      usernames: ["jdoe-dev"],
       profile: {
-        login: "iamkashz",
-        name: "k4shz",
-        bio: "Security Engineering | DevSecOps |",
-        location: "Austin, TX",
+        login: "jdoe-dev",
+        name: "J. Doe",
+        bio: "Software developer. Open source contributor.",
+        location: "Portland, OR",
         publicRepos: 34,
         followers: 6,
         createdAt: "2016-06-13T20:51:25Z",
-        avatarUrl: "https://avatars.githubusercontent.com/u/19916930?v=4",
-        htmlUrl: "https://github.com/iamkashz",
+        avatarUrl: "https://avatars.githubusercontent.com/u/0?v=4",
+        htmlUrl: "",
       },
       recentCommits: [
-        { sha: "24cad10", repo: "iamkashz/pypi-revshell", message: "PyPi-revshell-0.1" },
+        { sha: "24cad10", repo: "jdoe-dev/data-tools", message: "Initial release scaffold" },
         {
           sha: "bd3d7e6",
-          repo: "phypoh/Replicators",
+          repo: "acme-devops/replicators",
           message: "Merge remote-tracking branch 'origin/master'",
         },
         {
           sha: "01eb00a",
-          repo: "phypoh/Replicators",
-          message: "Migrated TourneyCode from GitHub:iAm-Kashif",
+          repo: "acme-devops/replicators",
+          message: "Migrated legacy dashboard from GitHub:JDoeDev",
         },
         {
           sha: "d94a6f7",
-          repo: "schneefux/python-gamelocker",
+          repo: "acme-devops/game-locker",
           message: "Merge remote-tracking branch 'origin/master'",
         },
       ],
@@ -138,156 +138,156 @@ const SAMPLES: SamplePreset[] = [
     },
     enumRuns: [
       {
-        username: "iamkashifmemon",
+        username: "john.doe",
         output: {
-          username: "iamkashifmemon",
+          username: "john.doe",
           totalChecked: 7,
           existsCount: 0,
           platforms: [
             {
               platform: "GitHub",
-              username: "iamkashifmemon",
-              url: "https://github.com/iamkashifmemon",
+              username: "john.doe",
+              url: "",
               exists: false,
             },
             {
               platform: "Docker Hub",
-              username: "iamkashifmemon",
-              url: "https://hub.docker.com/u/iamkashifmemon",
+              username: "john.doe",
+              url: "",
               exists: false,
             },
             {
               platform: "PyPI",
-              username: "iamkashifmemon",
-              url: "https://pypi.org/user/iamkashifmemon",
+              username: "john.doe",
+              url: "",
               exists: false,
             },
             {
               platform: "Twitch",
-              username: "iamkashifmemon",
-              url: "https://twitch.tv/iamkashifmemon",
+              username: "john.doe",
+              url: "",
               exists: false,
             },
             {
               platform: "Keybase",
-              username: "iamkashifmemon",
-              url: "https://keybase.io/iamkashifmemon",
+              username: "john.doe",
+              url: "",
               exists: false,
             },
             {
               platform: "HackerNews",
-              username: "iamkashifmemon",
-              url: "https://news.ycombinator.com/user?id=iamkashifmemon",
+              username: "john.doe",
+              url: "",
               exists: false,
             },
             {
               platform: "Dev.to",
-              username: "iamkashifmemon",
-              url: "https://dev.to/iamkashifmemon",
+              username: "john.doe",
+              url: "",
               exists: false,
             },
           ],
         },
       },
       {
-        username: "iamkashz",
+        username: "jdoe-dev",
         output: {
-          username: "iamkashz",
+          username: "jdoe-dev",
           totalChecked: 7,
           existsCount: 2,
           platforms: [
             {
               platform: "GitHub",
-              username: "iamkashz",
-              url: "https://github.com/iamkashz",
+              username: "jdoe-dev",
+              url: "",
               exists: true,
             },
             {
               platform: "Docker Hub",
-              username: "iamkashz",
-              url: "https://hub.docker.com/u/iamkashz",
+              username: "jdoe-dev",
+              url: "",
               exists: true,
             },
             {
               platform: "PyPI",
-              username: "iamkashz",
-              url: "https://pypi.org/user/iamkashz",
+              username: "jdoe-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "Twitch",
-              username: "iamkashz",
-              url: "https://twitch.tv/iamkashz",
+              username: "jdoe-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "Keybase",
-              username: "iamkashz",
-              url: "https://keybase.io/iamkashz",
+              username: "jdoe-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "HackerNews",
-              username: "iamkashz",
-              url: "https://news.ycombinator.com/user?id=iamkashz",
+              username: "jdoe-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "Dev.to",
-              username: "iamkashz",
-              url: "https://dev.to/iamkashz",
+              username: "jdoe-dev",
+              url: "",
               exists: false,
             },
           ],
         },
       },
       {
-        username: "iam-kashif",
+        username: "john-doe",
         output: {
-          username: "iam-kashif",
+          username: "john-doe",
           totalChecked: 7,
           existsCount: 0,
           platforms: [
             {
               platform: "GitHub",
-              username: "iam-kashif",
-              url: "https://github.com/iam-kashif",
+              username: "john-doe",
+              url: "",
               exists: false,
             },
             {
               platform: "Docker Hub",
-              username: "iam-kashif",
-              url: "https://hub.docker.com/u/iam-kashif",
+              username: "john-doe",
+              url: "",
               exists: false,
             },
             {
               platform: "PyPI",
-              username: "iam-kashif",
-              url: "https://pypi.org/user/iam-kashif",
+              username: "john-doe",
+              url: "",
               exists: false,
             },
             {
               platform: "Twitch",
-              username: "iam-kashif",
-              url: "https://twitch.tv/iam-kashif",
+              username: "john-doe",
+              url: "",
               exists: false,
             },
             {
               platform: "Keybase",
-              username: "iam-kashif",
-              url: "https://keybase.io/iam-kashif",
+              username: "john-doe",
+              url: "",
               exists: false,
             },
             {
               platform: "HackerNews",
-              username: "iam-kashif",
-              url: "https://news.ycombinator.com/user?id=iam-kashif",
+              username: "john-doe",
+              url: "",
               exists: false,
             },
             {
               platform: "Dev.to",
-              username: "iam-kashif",
-              url: "https://dev.to/iam-kashif",
+              username: "john-doe",
+              url: "",
               exists: false,
             },
           ],
@@ -295,11 +295,11 @@ const SAMPLES: SamplePreset[] = [
       },
     ],
     pivotProfileRuns: [],
-    // First pass discovered iAm-Kashif from the commit message
-    // "Migrated TourneyCode from GitHub:iAm-Kashif". Second pass found
+    // First pass discovered JDoeDev from the commit message
+    // "Migrated legacy dashboard from GitHub:JDoeDev". Second pass found
     // nothing new — loop exited.
     discoveryRuns: [
-      { output: { newHandles: ["iAm-Kashif"], knownHandles: 2, error: null } },
+      { output: { newHandles: ["JDoeDev"], knownHandles: 2, error: null } },
       { output: { newHandles: [], knownHandles: 3, error: null, reason: null } },
     ],
     correlation: {
@@ -358,9 +358,9 @@ const SAMPLES: SamplePreset[] = [
 
 **Breaches:** Your data has been compromised in 4 breaches, including WIRED, Parkmobile, and Zynga, which exposed sensitive information such as dates of birth, email addresses, genders, geographic locations, and licence plates.
 
-**Public identity:** You have confirmed accounts on GitHub and Docker Hub, and your GitHub profile publicly displays the name k4shz and your location in Austin, TX, alongside the discovered usernames iamkashifmemon, iamkashz, and iam-kashif.
+**Public identity:** You have confirmed accounts on GitHub and Docker Hub, and your GitHub profile publicly displays the name J. Doe and your location in Portland, OR, alongside the discovered usernames john.doe, jdoe-dev, and john-doe.
 
-**The attacker's path:** I see you used the same identity across WIRED, Parkmobile, and Zynga, which gives me a solid baseline for your password habits. Using the handle k4shz from your GitHub profile, I can correlate your activity in Austin to craft a highly convincing spear-phishing email. I will leverage your exposed geographic location and birth date to bypass your security questions and hijack your developer accounts on Docker Hub.`,
+**The attacker's path:** An attacker sees the same identity reused across WIRED, Parkmobile, and Zynga, which gives them a solid baseline for the target's password habits. Using the name J. Doe from the target's GitHub profile, an attacker can correlate activity in Portland to craft a highly convincing spear-phishing email. An attacker will leverage the exposed geographic location and birth date to bypass security questions and hijack the target's developer accounts on Docker Hub.`,
   },
 
   // Low preset — a low-risk identity with a single GitHub commit revealing
@@ -369,7 +369,7 @@ const SAMPLES: SamplePreset[] = [
   // realistic-shape fixture, not a real person.
   {
     id: "low",
-    email: "jordan.ng@gmail.com",
+    email: "foo.bar@gmail.com",
     label: "Low risk",
     severity: "Low",
     breach: {
@@ -379,9 +379,9 @@ const SAMPLES: SamplePreset[] = [
     },
     github: {
       commitCount: 1,
-      usernames: ["wavewright"],
+      usernames: ["fbar-dev"],
       profile: {
-        login: "wavewright",
+        login: "fbar-dev",
         name: null,
         bio: null,
         location: null,
@@ -389,12 +389,12 @@ const SAMPLES: SamplePreset[] = [
         followers: 0,
         createdAt: "2023-09-14T11:22:00Z",
         avatarUrl: "https://avatars.githubusercontent.com/u/0?v=4",
-        htmlUrl: "https://github.com/wavewright",
+        htmlUrl: "",
       },
       recentCommits: [
         {
           sha: "c4f1d28",
-          repo: "wavewright/trade-app",
+          repo: "fbar-dev/trade-app",
           message: "Initial commit: scaffolded project",
         },
       ],
@@ -421,104 +421,104 @@ const SAMPLES: SamplePreset[] = [
     },
     enumRuns: [
       {
-        username: "jordan.ng",
+        username: "foo.bar",
         output: {
-          username: "jordan.ng",
+          username: "foo.bar",
           totalChecked: 7,
           existsCount: 0,
           platforms: [
             {
               platform: "GitHub",
-              username: "jordan.ng",
-              url: "https://github.com/jordan.ng",
+              username: "foo.bar",
+              url: "",
               exists: false,
             },
             {
               platform: "Docker Hub",
-              username: "jordan.ng",
-              url: "https://hub.docker.com/u/jordan.ng",
+              username: "foo.bar",
+              url: "",
               exists: false,
             },
             {
               platform: "PyPI",
-              username: "jordan.ng",
-              url: "https://pypi.org/user/jordan.ng",
+              username: "foo.bar",
+              url: "",
               exists: false,
             },
             {
               platform: "Twitch",
-              username: "jordan.ng",
-              url: "https://twitch.tv/jordan.ng",
+              username: "foo.bar",
+              url: "",
               exists: false,
             },
             {
               platform: "Keybase",
-              username: "jordan.ng",
-              url: "https://keybase.io/jordan.ng",
+              username: "foo.bar",
+              url: "",
               exists: false,
             },
             {
               platform: "HackerNews",
-              username: "jordan.ng",
-              url: "https://news.ycombinator.com/user?id=jordan.ng",
+              username: "foo.bar",
+              url: "",
               exists: false,
             },
             {
               platform: "Dev.to",
-              username: "jordan.ng",
-              url: "https://dev.to/jordan.ng",
+              username: "foo.bar",
+              url: "",
               exists: false,
             },
           ],
         },
       },
       {
-        username: "wavewright",
+        username: "fbar-dev",
         output: {
-          username: "wavewright",
+          username: "fbar-dev",
           totalChecked: 7,
           existsCount: 1,
           platforms: [
             {
               platform: "GitHub",
-              username: "wavewright",
-              url: "https://github.com/wavewright",
+              username: "fbar-dev",
+              url: "",
               exists: true,
             },
             {
               platform: "Docker Hub",
-              username: "wavewright",
-              url: "https://hub.docker.com/u/wavewright",
+              username: "fbar-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "PyPI",
-              username: "wavewright",
-              url: "https://pypi.org/user/wavewright",
+              username: "fbar-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "Twitch",
-              username: "wavewright",
-              url: "https://twitch.tv/wavewright",
+              username: "fbar-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "Keybase",
-              username: "wavewright",
-              url: "https://keybase.io/wavewright",
+              username: "fbar-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "HackerNews",
-              username: "wavewright",
-              url: "https://news.ycombinator.com/user?id=wavewright",
+              username: "fbar-dev",
+              url: "",
               exists: false,
             },
             {
               platform: "Dev.to",
-              username: "wavewright",
-              url: "https://dev.to/wavewright",
+              username: "fbar-dev",
+              url: "",
               exists: false,
             },
           ],
@@ -553,9 +553,9 @@ const SAMPLES: SamplePreset[] = [
 
 **Do this first:** You should set up breach monitoring immediately to receive proactive alerts if your information ever appears in future security incidents.
 
-**Public identity:** Your digital footprint includes the candidate usernames jordan.ng and wavewright, with GitHub confirmed as a public account associated with your profile.
+**Public identity:** Your digital footprint includes the candidate usernames foo.bar and fbar-dev, with GitHub confirmed as a public account associated with your profile.
 
-**The attacker's path:** I have identified you by your handle wavewright, which I can cross-reference across various platforms to build a profile of your activity. Since I know you are active on GitHub under this identity, I would monitor your public repositories for configuration mistakes or exposed credentials. Even with a clean security history, your consistent use of these usernames allows me to track your presence across the web and wait for a single point of failure.`,
+**The attacker's path:** An attacker identifies the target by the handle fbar-dev and cross-references it across various platforms to build a profile of the target's activity. Since the target is active on GitHub under this identity, an attacker would monitor the public repositories for configuration mistakes or exposed credentials. Even with a clean security history, consistent use of these usernames allows an attacker to track the target's presence across the web and wait for a single point of failure.`,
   },
 ];
 

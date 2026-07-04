@@ -1,12 +1,8 @@
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 
-/**
- * Inline SocialProof mark. Option I from design-explorations/logos —
- * a shell prompt chevron + lowercase `sp` in Inter. Inlined (not
- * imported as an external SVG asset) so it inherits currentColor and
- * sits inside the existing primary-tinted tile in the header.
- */
+// Shell prompt chevron + lowercase `sp` in Inter. Inlined so it inherits
+// currentColor from the surrounding text.
 function SocialProofMark({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" role="img" aria-label="SocialProof" className={className}>

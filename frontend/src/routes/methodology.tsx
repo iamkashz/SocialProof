@@ -1,7 +1,6 @@
 import { MethodologyDiagram } from "@/components/MethodologyDiagram";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/methodology")({
   head: () => ({
@@ -21,16 +20,7 @@ function Methodology() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl px-4 py-16">
-        <div className="mb-3">
-          <Link
-            to="/about"
-            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted-foreground transition hover:text-primary"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            Back to About
-          </Link>
-        </div>
+      <main className="mx-auto w-full max-w-6xl px-4 py-8">
         <h1 className="text-3xl font-semibold tracking-tight">How SocialProof works</h1>
         <p className="mt-3 text-muted-foreground">
           A single email address travels through six specialized agents. Most are deterministic

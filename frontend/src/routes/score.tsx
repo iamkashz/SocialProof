@@ -156,7 +156,7 @@ function Score() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl px-4 py-16">
+      <main className="mx-auto w-full max-w-6xl px-4 py-8">
         <h1 className="text-3xl font-semibold tracking-tight">How scoring works</h1>
         <p className="mt-3 text-muted-foreground">
           Every scan produces one number between 0 and 100 plus a severity label. This page

@@ -2,20 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 
 export type ScanStatus = "idle" | "streaming" | "done" | "error";
 
-/**
- * Module-level guard, NOT a component-level ref.
- *
- * React 19 StrictMode in dev double-mounts every component to surface bugs:
- * effect runs → cleanup runs → effect runs again. With a component-level
- * `useRef`, the ref persists across the unmount/remount, so the second
- * effect run skips — but the first fetch was already aborted by the
- * cleanup in between, leaving the page stuck at "Spinning up agents…".
- *
- * Keying by sessionId at module scope means: each sessionId starts exactly
- * one fetch, regardless of how many times the component mounts. Different
- * scans use different sessionIds (generated in ScanInput) so they don't
- * collide.
- */
+// Module-scope guard, not a useRef — survives React 19 StrictMode's
+// dev-only mount/unmount/remount so a sessionId only ever fetches once.
 const startedSessions = new Set<string>();
 
 export type AgentPart = {

@@ -19,7 +19,7 @@ function About() {
   return (
     <div className="min-h-screen">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl px-4 py-16">
+      <main className="mx-auto w-full max-w-6xl px-4 py-8">
         {/* Capstone banner — pinned at the top of /about so the framing
             is the first thing every visitor sees. */}
         <div className="mb-10 flex items-center gap-3 rounded-xl border border-primary/40 bg-primary/10 px-5 py-4">

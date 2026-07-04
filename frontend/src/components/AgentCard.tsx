@@ -496,26 +496,9 @@ function PasteRender({ data }: { data: any }) {
   );
 }
 
-/**
- * Single renderer for both account-discovery signals:
- *  - user-scanner email scan: `{ accounts: [{site_name, url, ...}], checkedCount, foundCount }`
- *  - username scan: `{ username, totalChecked, existsCount, platforms: [{platform, url, exists}] }`
- *
- * The two backend agents probe different join keys (email vs. username),
- * but the user-facing meaning is the same: "places this identity exists."
- * Rendered as the original 3-column tile grid, showing only platforms
- * where an account was found. With ~95 probes per scan, listing the
- * not-found ones would visually drown the signal; the header still
- * shows the X-of-Y count so the user knows the breadth of coverage.
- */
-// Platform tiles link out only when the URL actually resolves to a
-// useful public artifact. Two reasons a tile is NOT linkable:
-//   1. The upstream returned only the site homepage (no per-user page),
-//      which is what user-scanner does for email-keyed probes.
-//   2. The platform has a per-user URL, but visiting it requires login,
-//      returns a soft 404, or otherwise gives the visitor nothing —
-//      those go on the denylist below.
-// Match is case-insensitive against the platform / site_name string.
+// Denylist of platforms where per-user URLs don't resolve to something
+// useful (login gates, soft 404s, homepage-only probes). Case-insensitive
+// match against platform / site_name.
 const _UNLINKABLE_PLATFORMS = new Set([
   "apple developer",
   "appledeveloper",
