@@ -22,13 +22,6 @@ COPY ./pyproject.toml ./README.md ./uv.lock* ./
 
 COPY ./app ./app
 
-# Built frontend (produced by `npm run build` in ../frontend before this
-# image is built). Served from FastAPI when SERVE_FRONTEND=1 is set.
-# If the deploy pipeline hasn't built the frontend, this COPY is skipped
-# by the trailing */ glob — the container still boots, just without the
-# UI.
-COPY ./static* ./static/
-
 RUN uv sync --frozen
 
 ARG COMMIT_SHA=""
@@ -37,10 +30,9 @@ ENV COMMIT_SHA=${COMMIT_SHA}
 ARG AGENT_VERSION=0.0.0
 ENV AGENT_VERSION=${AGENT_VERSION}
 
-# Cloud Run needs the app to bind :8080 and stay in one process. Also
-# sets the two env vars that flip the app into "single-service prod
-# mode": frontend gets served from /static, cache writes to /tmp.
-ENV SERVE_FRONTEND=1
+# Cloud Run wants the app to bind :8080 as a single process. The cache
+# directory has to be /tmp because the container filesystem is
+# read-only elsewhere.
 ENV RECENT_SCANS_DIR=/tmp/recent-scans
 
 EXPOSE 8080
