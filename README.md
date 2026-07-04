@@ -52,6 +52,10 @@ hallucinated handles, names, or placeholder tokens before the report
 reaches the user. If the LLM fails entirely, the deterministic report
 still renders.
 
+<p align="center">
+  <img src="./assets/imgs/screenshots/1-landing.png" alt="SocialProof landing page — six agent tiles" width="820" />
+</p>
+
 ## Tech stack
 
 **Backend**
@@ -134,6 +138,10 @@ deterministic risk report survives even when the LLM fails.
 The animated version of the flow, with per-stage descriptions, lives
 at **`/methodology`** in the running app.
 
+<p align="center">
+  <img src="./assets/imgs/screenshots/3-methodology.png" alt="SocialProof methodology diagram — the full pipeline visualized" width="720" />
+</p>
+
 ## Scoring
 
 The 0–100 risk score is the sum of four sub-scores, each capped at 25:
@@ -173,8 +181,8 @@ Full formula, worked example, and severity bands documented on the
 - **Email out of URLs.** The scan URL contains only an opaque session
   id; the email itself is held in tab-scoped `sessionStorage` so it
   doesn't leak via `Referer`, browser history, or shared screenshots.
-- **IntelligenceX metadata only.** We list records but never download
-  leak contents.
+- **IntelligenceX metadata only.** Records are listed but never
+  downloaded, even when the endpoint would allow it.
 
 ## Testing
 
@@ -187,8 +195,12 @@ Two pytest suites under [`backend/tests/eval/`](./backend/tests/eval/):
 
 ```bash
 cd backend && uv run pytest tests/eval/
-# 25 passed in ~1.3s
+# 25 passed in ~1.7s
 ```
+
+<p align="center">
+  <img src="./assets/imgs/screenshots/5-eval-terminal.png" alt="Terminal output showing 25 evaluation fixtures passed" width="820" />
+</p>
 
 ## Layout
 
@@ -201,11 +213,14 @@ SocialProof/
 │   │   ├── server.py         # FastAPI + SSE + rate limiting + security headers
 │   │   └── cache.py          # Same-day per-email replay cache
 │   └── tests/eval/           # Scoring + guardrail evals (25 fixtures)
-└── frontend/
-    └── src/
-        ├── routes/           # Landing, sample, scan, score, methodology, about, author
-        ├── components/       # Agent cards, risk gauge, methodology diagram, ...
-        └── hooks/            # useAdkScan (SSE consumer)
+├── frontend/
+│   └── src/
+│       ├── routes/           # Landing, sample, scan, score, methodology, about, author
+│       ├── components/       # Agent cards, risk gauge, methodology diagram, ...
+│       └── hooks/            # useAdkScan (SSE consumer)
+└── assets/
+    ├── imgs/                 # Logo, cover, README hero
+    └── imgs/screenshots/     # Kaggle Writeup + README screenshots
 ```
 
 ## See also
@@ -214,7 +229,7 @@ SocialProof/
 - [`backend/README.md`](./backend/README.md) — backend setup, ADK details, deploy notes
 - `/methodology` page — animated agent flow with per-stage descriptions
 - `/score` page — full scoring formula with worked example
-- `/about` page — what we do and don't do
+- `/about` page — the tool's scope, sources, and limits
 - `/sample` page — pre-recorded high- and low-risk report fixtures
 
 ## License
