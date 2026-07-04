@@ -84,42 +84,7 @@ still renders.
 
 ## Quick start
 
-You need Python ≥ 3.11, [uv](https://docs.astral.sh/uv/), Node.js ≥ 20,
-and two free API keys:
-
-- **Google AI Studio (Gemini)** — <https://aistudio.google.com/apikey>
-- **IntelligenceX** — <https://intelx.io/account?tab=developer>
-
-Copy the template and fill in your keys:
-
-```bash
-cd backend/app
-cp .env.example .env
-$EDITOR .env
-```
-
-`GITHUB_TOKEN` is optional — adding one raises GitHub's commit-search
-rate limit from 60/hr to 5000/hr.
-
-**Terminal 1** — ADK backend on `:8080`:
-
-```bash
-cd backend
-uv tool install google-agents-cli   # one-time
-agents-cli install
-uv run uvicorn app.server:app --reload --port 8080
-```
-
-**Terminal 2** — React UI on `:5173`:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open <http://localhost:5173> and run a scan. Full step-by-step guide
-and troubleshooting in [`RUN.md`](./RUN.md).
+Setup, run, and deploy instructions live in [`RUN.md`](./RUN.md).
 
 ## Architecture
 
