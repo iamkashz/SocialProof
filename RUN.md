@@ -7,7 +7,9 @@ Two ways to run this project:
 - **[Cloud Run deployment](#cloud-run-deployment)** — two Cloud Run services
   (frontend SSR + FastAPI backend), single public URL for the frontend.
   What the live demo at
-  <https://socialproof-web-1010516973639.us-east1.run.app> uses.
+  <https://socialproof-web-1010516973639.us-east1.run.app> uses. Includes a
+  **[teardown section](#pausing-or-tearing-down-the-deployment)** for when
+  you're done grading and want to stop the demo from serving traffic.
 
 ---
 
@@ -341,16 +343,74 @@ gcloud run services logs read socialproof-api --region us-east1
 gcloud run services logs read socialproof-web --region us-east1
 ```
 
-**Tear down** (if you no longer need the live demo):
+### Pausing or tearing down the deployment
+
+Three levels of shutdown, from mildest to most permanent. Pick based on
+whether you might want to bring the demo back.
+
+#### Level 1 — Idle only (already active, costs $0 while nobody visits)
+
+Both services are already deployed with `--min-instances 0`, so they run
+zero containers when idle. Idle cost is genuinely **$0.00/day**. Nothing
+to do here — this is the default state.
+
+The only ongoing risk is that visitors to the public URL will run scans
+against your API quotas (Gemini, IntelX, GitHub). If that becomes an
+issue after the writeup goes public, go to level 2.
+
+#### Level 2 — Make the URL unreachable, keep the config
+
+Sets `max-instances` to 0. Any incoming request returns a `503` because
+Cloud Run has nothing to route to. Config, secrets, and container images
+stay in place — you can bring the service back in 30 seconds by setting
+`max-instances` back to `2`.
 
 ```bash
-gcloud run services delete socialproof-api --region us-east1
-gcloud run services delete socialproof-web --region us-east1
+# Take both services offline
+gcloud run services update socialproof-api \
+  --region us-east1 --max-instances=0
 
-# Optional: delete the Artifact Registry repo (stores container images)
-gcloud artifacts repositories delete cloud-run-source-deploy \
-  --location us-east1
+gcloud run services update socialproof-web \
+  --region us-east1 --max-instances=0
+
+# ...bring them back later
+gcloud run services update socialproof-api \
+  --region us-east1 --max-instances=2
+
+gcloud run services update socialproof-web \
+  --region us-east1 --max-instances=2
 ```
+
+Use this when grading is over but you might want to demo the tool later.
+
+#### Level 3 — Delete everything, permanent
+
+Full teardown. All Cloud Run services, container images, and secrets
+go away. GCP holds the project for a 30-day recovery window; after that,
+it's actually gone.
+
+```bash
+# Delete the Cloud Run services
+gcloud run services delete socialproof-api --region us-east1 --quiet
+gcloud run services delete socialproof-web --region us-east1 --quiet
+
+# Delete the container image storage (Artifact Registry)
+gcloud artifacts repositories delete cloud-run-source-deploy \
+  --location us-east1 --quiet
+
+# Delete the API-key secrets
+gcloud secrets delete GOOGLE_API_KEY --quiet
+gcloud secrets delete INTELX_API_KEY --quiet
+# If you set up GITHUB_TOKEN, also:
+# gcloud secrets delete GITHUB_TOKEN --quiet
+
+# Nuclear option: delete the entire GCP project (reversible for 30 days)
+# gcloud projects delete socialproof-live
+```
+
+After this, rotate your Gemini and IntelX API keys locally as a
+belt-and-suspenders move — the secrets have been deleted from GCP, but
+the actual keys still work at the source until you rotate them.
 
 ### Cloud Run architecture notes
 
