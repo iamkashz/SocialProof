@@ -24,7 +24,7 @@ export const Route = createFileRoute("/author")({
       { title: "Author — SocialProof" },
       {
         name: "description",
-        content: "Kashz — author of SocialProof.",
+        content: "Kashif Memon — author of SocialProof.",
       },
     ],
   }),
@@ -42,7 +42,7 @@ function Author() {
             <div className="h-36 w-36 overflow-hidden rounded-2xl border border-border bg-card/60 shadow-sm shadow-primary/10">
               <img
                 src="/img/author.jpg"
-                alt="Kashz"
+                alt="Kashif Memon"
                 className="h-full w-full object-cover"
               />
             </div>
@@ -50,7 +50,7 @@ function Author() {
 
           <div>
             <div className="font-mono text-xl text-primary">$ whoami</div>
-            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Kashz</h1>
+            <h1 className="mt-1 text-3xl font-semibold tracking-tight">Kashif Memon</h1>
             <p className="mt-2 text-sm text-muted-foreground">Security Engineer</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Trained to break stuff, getting paid to secure it.

@@ -111,12 +111,19 @@ function About() {
         </p>
         <ul className="mt-3 list-disc space-y-1.5 pl-6 text-sm text-foreground/90">
           <li>
-            <span className="font-medium">HIBP Pro</span> — HaveIBeenPwned canonical breach API
-            (paid subscription).
+            <span className="font-medium">Expose SocialProof as an MCP server</span> — package the
+            full scan pipeline as a Model Context Protocol tool so any MCP-aware client
+            (Claude Desktop, Cursor, another agent) can call it as a single capability.
           </li>
           <li>
-            <span className="font-medium">EmailRep.io</span> — email reputation signals (disposable,
-            suspicious, profile activity).
+            <span className="font-medium">Scheduled rescans &amp; email alerts</span> — opt in to
+            have SocialProof rescan saved emails on a schedule and notify you when the risk profile
+            changes (new breach, new paste-site appearance, new public account discovered).
+          </li>
+          <li>
+            <span className="font-medium">Per-finding confidence levels</span> — high / medium / low
+            confidence flags on each agent result (e.g. HackerNews handle matches get low confidence
+            due to handle collision rates, breach hits get high confidence).
           </li>
           <li>
             <span className="font-medium">Custom domain reputation</span> — for self-hosted or
@@ -133,14 +140,12 @@ function About() {
             Stack Overflow username matching.
           </li>
           <li>
-            <span className="font-medium">Per-finding confidence levels</span> — high / medium / low
-            confidence flags on each agent result (e.g. HackerNews handle matches get low confidence
-            due to handle collision rates, breach hits get high confidence).
+            <span className="font-medium">EmailRep.io</span> — email reputation signals (disposable,
+            suspicious, profile activity). Paid API.
           </li>
           <li>
-            <span className="font-medium">Scheduled rescans &amp; email alerts</span> — opt in to
-            have SocialProof rescan saved emails on a schedule and notify you when the risk profile
-            changes (new breach, new paste-site appearance, new public account discovered).
+            <span className="font-medium">HIBP Pro</span> — HaveIBeenPwned canonical breach API.
+            Paid subscription.
           </li>
         </ul>
 

@@ -1,1 +1,9 @@
 GEMINI.md
+
+# macOS
+.DS_Store
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp

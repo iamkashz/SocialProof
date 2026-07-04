@@ -1,7 +1,13 @@
+<p align="center">
+  <img src="./assets/imgs/socialproof-git.png" alt="SocialProof — multi-agent OSINT scanner: see what attackers see about you" width="820" />
+</p>
+
 # SocialProof
 
 > [!NOTE]
 > **Capstone submission** — 5-Day AI Agents: Intensive Vibe Coding Course With Google · June 15–19, 2026
+>
+> Submitted by Kashif Memon
 
 A multi-agent OSINT scanner built on Google's Agent Development Kit
 (ADK). Six specialized agents stream findings in parallel through
