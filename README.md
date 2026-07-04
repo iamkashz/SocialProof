@@ -9,6 +9,11 @@
 >
 > Submitted by Kashif Memon
 
+> [!TIP]
+> **Live demo**: <https://socialproof-web-1010516973639.us-east1.run.app>
+>
+> Two Cloud Run services (frontend SSR + FastAPI backend). Cold start ~5s; the first scan takes ~2 min. Free-tier API keys, so if you hit a rate limit that's on us.
+
 A multi-agent OSINT scanner built on Google's Agent Development Kit
 (ADK). Six specialized agents stream findings in parallel through
 breach, paste, GitHub, and account-enumeration sources. A
