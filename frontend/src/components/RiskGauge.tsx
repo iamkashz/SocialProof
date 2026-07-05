@@ -3,19 +3,19 @@ import { cn } from "@/lib/utils";
 export function RiskGauge({ score, severity }: { score: number; severity: string }) {
   const clamped = Math.max(0, Math.min(100, score));
   const color =
-    clamped >= 75
+    clamped >= 70
       ? "text-destructive"
-      : clamped >= 50
+      : clamped >= 45
         ? "text-warning"
-        : clamped >= 25
+        : clamped >= 20
           ? "text-primary"
           : "text-success";
   const stroke =
-    clamped >= 75
+    clamped >= 70
       ? "stroke-destructive"
-      : clamped >= 50
+      : clamped >= 45
         ? "stroke-warning"
-        : clamped >= 25
+        : clamped >= 20
           ? "stroke-primary"
           : "stroke-success";
   const r = 70;

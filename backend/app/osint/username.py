@@ -23,7 +23,7 @@ _CATEGORIES: tuple[str, ...] = ("social", "dev", "creator", "community")
 # Hard cap on the whole multi-category scan. user-scanner fans out
 # ~95 HTTP probes across these four categories; a stalled upstream
 # shouldn't block the pivot loop indefinitely.
-_TIMEOUT_SEC = 30.0
+_TIMEOUT_SEC = 60.0
 
 # Mirror the email-side wrapper's defensive posture: drop any results
 # that slip in from categories we intend to exclude. Defense-in-depth

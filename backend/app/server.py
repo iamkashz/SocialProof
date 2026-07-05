@@ -36,6 +36,11 @@ from app.agents.root import _validate_email
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
+# Third-party loggers that spam INFO — every httpx probe, every ADK auto-call
+# preamble. Bumped to WARNING so our own scan/agent log lines aren't buried.
+for _noisy in ("httpx", "httpcore", "google_genai", "google.adk"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 _USER_ID = "socialproof-local-user"
