@@ -14,15 +14,23 @@
 
 FROM python:3.12-slim
 
-RUN pip install --no-cache-dir uv==0.8.13
+# Copy uv directly from the official image — smaller than `pip install uv`.
+COPY --from=ghcr.io/astral-sh/uv:0.8.13 /uv /uvx /bin/
 
 WORKDIR /code
 
-COPY ./pyproject.toml ./README.md ./uv.lock* ./
+# Manifests first so dep-install layer caches when only source changes.
+COPY ./pyproject.toml ./uv.lock* ./
 
+# Install deps (not the project itself, no dev packages).
+RUN uv sync --frozen --no-install-project --no-dev
+
+# Now the source. README is referenced by pyproject metadata.
+COPY ./README.md ./
 COPY ./app ./app
 
-RUN uv sync --frozen
+# Final sync installs the project itself.
+RUN uv sync --frozen --no-dev
 
 ARG COMMIT_SHA=""
 ENV COMMIT_SHA=${COMMIT_SHA}

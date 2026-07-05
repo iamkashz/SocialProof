@@ -8,11 +8,11 @@
 FROM node:22-slim AS builder
 WORKDIR /app
 
-# Copy manifests first so the install step is cached when only source
-# changes. `npm install` (not `npm ci`) tolerates minor lockfile drift.
+# Manifests first so the install layer caches when only source changes.
+# `npm ci` is strictly faster than `npm install` and enforces lockfile.
 COPY package.json package-lock.json* ./
 
-RUN npm install --no-audit --no-fund
+RUN npm ci --no-audit --no-fund
 
 COPY . .
 
@@ -29,7 +29,8 @@ ENV NODE_ENV=production
 # Production-only deps for the runtime. Skips devDependencies (Vite,
 # eslint, etc.) so the image stays small.
 COPY package.json package-lock.json* ./
-RUN npm install --omit=dev --no-audit --no-fund && npm cache clean --force
+
+RUN npm ci --omit=dev --no-audit --no-fund
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/public ./public
