@@ -12,6 +12,7 @@ Run locally with:
 from __future__ import annotations
 
 import json
+import logging
 import os
 import uuid
 from collections.abc import AsyncIterator
@@ -34,6 +35,8 @@ from app.agent import root_agent
 from app.agents.root import _validate_email
 
 load_dotenv()
+
+logger = logging.getLogger(__name__)
 
 _USER_ID = "socialproof-local-user"
 
@@ -303,14 +306,26 @@ async def scan(request: Request, req: ScanRequest) -> StreamingResponse:
     if req.force_fresh:
         # Drop any existing entry so the upcoming save replaces cleanly.
         cache.clear(normalized)
+        cache_status = "forced"
+        cached = None
     else:
         cached = cache.load(normalized)
-        if cached is not None:
-            return StreamingResponse(
-                _stream_cached(normalized, session_id, cached),
-                media_type="text/event-stream",
-                headers=headers,
-            )
+        cache_status = "hit" if cached is not None else "miss"
+
+    logger.info(
+        "scan: email=%s ip=%s ua=%r cache=%s",
+        normalized,
+        _client_ip(request),
+        request.headers.get("User-Agent", ""),
+        cache_status,
+    )
+
+    if cached is not None:
+        return StreamingResponse(
+            _stream_cached(normalized, session_id, cached),
+            media_type="text/event-stream",
+            headers=headers,
+        )
 
     return StreamingResponse(
         _stream_fresh(normalized, session_id),
