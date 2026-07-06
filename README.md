@@ -10,7 +10,7 @@
 > Submitted by Kashif Memon
 
 > [!TIP]
-> **Live demo**: <https://socialproof-web-1010516973639.us-east1.run.app>
+> **Live demo**: <https://kashz.s.gy/socialproof> · **Video walkthrough**: <https://www.youtube.com/watch?v=gxudRLM41rg>
 
 A multi-agent OSINT scanner built on Google's Agent Development Kit
 (ADK). Six specialized agents stream findings in parallel through
